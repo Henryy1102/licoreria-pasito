@@ -28,10 +28,23 @@ async function generarPDFFactura(factura, outputPath = null) {
       });
 
       // ENCABEZADO
+      const logoUrl =
+        process.env.PDF_LOGO_URL || "https://licoreria-pasito.vercel.app/logo.jpeg";
+
+      try {
+        const logoResponse = await fetch(logoUrl);
+        if (logoResponse.ok) {
+          const logoBuffer = Buffer.from(await logoResponse.arrayBuffer());
+          doc.image(logoBuffer, 50, 45, { width: 35, height: 35 });
+        }
+      } catch (error) {
+        // Si falla el logo, continuar sin imagen
+      }
+
       doc
         .fontSize(24)
         .fillColor("#FF4D8D")
-        .text("🍷 LICORERÍA AL PASITO", 50, 50);
+        .text("LICORERÍA AL PASITO", 95, 50);
 
       doc
         .fontSize(10)
