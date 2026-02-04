@@ -6,11 +6,11 @@ import User from "../models/Users.js";
 dotenv.config();
 
 const DEFAULT_EMAIL = process.env.ADMIN_EMAIL || "admin@pasito.com";
-const DEFAULT_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const DEFAULT_PASSWORD = process.env.ADMIN_PASSWORD || "hdaniel1102";
 
 async function main() {
-  if (!process.env.MONGO_URI) {
-    console.error("Falta MONGO_URI en el .env");
+  if (!process.env.MONGODB_URI) {
+    console.error("Falta MONGODB_URI en el .env");
     process.exit(1);
   }
   if (!process.env.JWT_SECRET) {
