@@ -17,7 +17,7 @@ Sistema web para gestión de una licorería con panel administrativo, ventas, ó
 - Gestión de productos, clientes, órdenes, pagos y facturas
 - Reportes y auditoría
 - Notificaciones
-- Facturación con PDF y XML
+- Facturación con PDF 
 
 ## Estructura del proyecto
 
