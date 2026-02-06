@@ -21,7 +21,6 @@ import settingsRoutes from "./routes/settings.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import invoiceRoutes from "./routes/invoice.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
-import pushRoutes from "./routes/push.routes.js";
 import { connectDB } from "./config/db.js";
 
 const app = express();
@@ -45,7 +44,6 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/reviews", reviewRoutes);
-app.use("/api/push", pushRoutes);
 
 const PORT = process.env.PORT || 4000;
 

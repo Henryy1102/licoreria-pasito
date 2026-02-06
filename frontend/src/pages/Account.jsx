@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import axios from "axios";
-import { pushService } from "../services/pushService";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -15,21 +14,8 @@ export default function Account() {
     telefono: user?.telefono || "",
     password: "",
   });
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [loadingPush, setLoadingPush] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    const verificarPush = async () => {
-      if (!("serviceWorker" in navigator)) return;
-      const reg = await navigator.serviceWorker.getRegistration();
-      const sub = await reg?.pushManager.getSubscription();
-      setPushEnabled(!!sub);
-    };
-
-    verificarPush();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,41 +81,6 @@ export default function Account() {
                 </Link>
               )}
             </div>
-
-            {user?.rol === "cliente" && (
-              <div className="mt-6 border-t border-primary/20 pt-4">
-                <h3 className="text-lg font-semibold text-primary mb-2">Notificaciones push</h3>
-                <p className="text-accent text-sm mb-3">
-                  Recibe alertas de pedidos y promociones.
-                </p>
-                <button
-                  className="btn-secondary"
-                  disabled={loadingPush}
-                  onClick={async () => {
-                    setLoadingPush(true);
-                    try {
-                      if (pushEnabled) {
-                        await pushService.unsubscribe();
-                        setPushEnabled(false);
-                      } else {
-                        await pushService.subscribe();
-                        setPushEnabled(true);
-                      }
-                    } catch (err) {
-                      setMessage(err.message || "Error con notificaciones push");
-                    } finally {
-                      setLoadingPush(false);
-                    }
-                  }}
-                >
-                  {loadingPush
-                    ? "Procesando..."
-                    : pushEnabled
-                      ? "Desactivar"
-                      : "Activar"}
-                </button>
-              </div>
-            )}
           </>
         ) : (
           <form onSubmit={handleSubmit}>

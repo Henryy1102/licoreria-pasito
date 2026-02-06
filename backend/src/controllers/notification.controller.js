@@ -1,27 +1,10 @@
 import Notification from "../models/Notification.js";
-import { sendPushToAdmins, sendPushToUser } from "../utils/push.js";
 
 // Crear notificación
 export const crearNotificacion = async (data) => {
   try {
     const notificacion = new Notification(data);
     await notificacion.save();
-
-    if (notificacion.paraAdmin) {
-      await sendPushToAdmins({
-        titulo: notificacion.titulo,
-        mensaje: notificacion.mensaje,
-        icono: notificacion.icono,
-        url: "/admin/ordenes",
-      });
-    } else if (notificacion.usuario) {
-      await sendPushToUser(notificacion.usuario, {
-        titulo: notificacion.titulo,
-        mensaje: notificacion.mensaje,
-        icono: notificacion.icono,
-        url: "/mis-ordenes",
-      });
-    }
 
     return notificacion;
   } catch (error) {
