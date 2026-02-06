@@ -56,7 +56,7 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3 sm:mb-4">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Nombre Completo *
             </label>
             <input
@@ -71,7 +71,7 @@ export default function Register() {
           </div>
 
           <div className="mb-3 sm:mb-4">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Email *
             </label>
             <input
@@ -86,7 +86,7 @@ export default function Register() {
           </div>
 
           <div className="mb-3 sm:mb-4">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Teléfono
             </label>
             <input
@@ -100,7 +100,7 @@ export default function Register() {
           </div>
 
           <div className="mb-3 sm:mb-4">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Fecha de Nacimiento * (Debes ser mayor de 18 años)
             </label>
             <input
@@ -114,7 +114,7 @@ export default function Register() {
           </div>
 
           <div className="mb-3 sm:mb-4">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Contraseña *
             </label>
             <div className="relative">
@@ -139,7 +139,7 @@ export default function Register() {
           </div>
 
           <div className="mb-4 sm:mb-6">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Confirmar Contraseña *
             </label>
             <div className="relative">

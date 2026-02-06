@@ -43,7 +43,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3 sm:mb-4">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Email
             </label>
             <input
@@ -57,7 +57,7 @@ export default function Login() {
           </div>
 
           <div className="mb-3 sm:mb-4">
-            <label className="block text-secondary font-semibold mb-2 text-sm sm:text-base">
+            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Contraseña
             </label>
             <div className="relative">
