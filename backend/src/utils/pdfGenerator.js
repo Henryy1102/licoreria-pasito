@@ -9,6 +9,19 @@ import path from "path";
  * @returns {Promise<Buffer>} - Buffer del PDF generado
  */
 async function generarPDFFactura(factura, outputPath = null) {
+  const logoUrl =
+    process.env.PDF_LOGO_URL || "https://licoreria-pasito.vercel.app/logo.jpeg";
+  let logoBuffer = null;
+
+  try {
+    const logoResponse = await fetch(logoUrl);
+    if (logoResponse.ok) {
+      logoBuffer = Buffer.from(await logoResponse.arrayBuffer());
+    }
+  } catch (error) {
+    // Si falla el logo, continuar sin imagen
+  }
+
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: "LETTER", margin: 50 });
@@ -28,17 +41,8 @@ async function generarPDFFactura(factura, outputPath = null) {
       });
 
       // ENCABEZADO
-      const logoUrl =
-        process.env.PDF_LOGO_URL || "https://licoreria-pasito.vercel.app/logo.jpeg";
-
-      try {
-        const logoResponse = await fetch(logoUrl);
-        if (logoResponse.ok) {
-          const logoBuffer = Buffer.from(await logoResponse.arrayBuffer());
-          doc.image(logoBuffer, 50, 45, { width: 35, height: 35 });
-        }
-      } catch (error) {
-        // Si falla el logo, continuar sin imagen
+      if (logoBuffer) {
+        doc.image(logoBuffer, 50, 45, { width: 35, height: 35 });
       }
 
       doc
