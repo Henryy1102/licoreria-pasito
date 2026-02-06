@@ -4,6 +4,8 @@ import { useAuthStore } from "../store/authStore";
 import { usePaymentStore } from "../store/paymentStore";
 import { useOrderStore } from "../store/orderStore";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 export default function AdminPagos() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -60,7 +62,7 @@ export default function AdminPagos() {
   const cargarTransferenciasC = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4000/api/orders/transferencia/pendiente", {
+      const response = await fetch(`${API_BASE}/api/orders/transferencia/pendiente`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.ok) {
@@ -86,7 +88,7 @@ export default function AdminPagos() {
     setActualizando(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4000/api/orders/${ordenId}/confirmar-transferencia`, {
+      const response = await fetch(`${API_BASE}/api/orders/${ordenId}/confirmar-transferencia`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -125,7 +127,7 @@ export default function AdminPagos() {
     setActualizando(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4000/api/orders/${ordenId}/rechazar-transferencia`, {
+      const response = await fetch(`${API_BASE}/api/orders/${ordenId}/rechazar-transferencia`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const USERS_API = `${API_BASE}/api/users`;
+
 export default function AdminClients() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -12,7 +15,7 @@ export default function AdminClients() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.get("http://localhost:4000/api/users/clients", {
+      const { data } = await axios.get(`${USERS_API}/clients`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setClients(data);
@@ -41,7 +44,7 @@ export default function AdminClients() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`http://localhost:4000/api/users/${editingId}`, form, {
+      await axios.put(`${USERS_API}/${editingId}`, form, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchClients();
@@ -56,7 +59,7 @@ export default function AdminClients() {
     if (!window.confirm("¿Eliminar este cliente?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:4000/api/users/${id}`, {
+      await axios.delete(`${USERS_API}/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchClients();

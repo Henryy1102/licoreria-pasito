@@ -15,6 +15,8 @@ import {
 } from "chart.js";
 import { Line, Bar, Doughnut } from "react-chartjs-2";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 // Registrar componentes de Chart.js
 ChartJS.register(
   CategoryScale,
@@ -72,7 +74,7 @@ export default function AdminReportes() {
       if (fechaFin) params.append("fechaFin", fechaFin);
 
       const response = await fetch(
-        `http://localhost:4000/api/reports/ventas?${params.toString()}`,
+        `${API_BASE}/api/reports/ventas?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -89,7 +91,7 @@ export default function AdminReportes() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:4000/api/reports/inventario`,
+        `${API_BASE}/api/reports/inventario`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -110,7 +112,7 @@ export default function AdminReportes() {
       if (fechaFin) params.append("fechaFin", fechaFin);
 
       const response = await fetch(
-        `http://localhost:4000/api/reports/clientes-frecuentes?${params.toString()}`,
+        `${API_BASE}/api/reports/clientes-frecuentes?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -127,7 +129,7 @@ export default function AdminReportes() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:4000/api/reports/tendencias`,
+        `${API_BASE}/api/reports/tendencias`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

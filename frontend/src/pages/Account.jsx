@@ -5,6 +5,8 @@ import axios from "axios";
 import { loyaltyService } from "../services/loyaltyService";
 import { pushService } from "../services/pushService";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
 export default function Account() {
   const { user, setUser } = useAuthStore();
   const [editing, setEditing] = useState(false);
@@ -58,7 +60,7 @@ export default function Account() {
       if (!payload.password) delete payload.password;
 
       const { data } = await axios.put(
-        `http://localhost:4000/api/users/${user.id}`,
+        `${API_BASE}/api/users/${user.id}`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
