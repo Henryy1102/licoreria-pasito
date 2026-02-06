@@ -183,32 +183,20 @@ async function generarPDFFactura(factura, outputPath = null) {
           align: "right",
         });
 
-      if (factura.descuento > 0) {
-        doc
-          .text("Descuento:", 380, totalesTop + 20, {
-            width: 100,
-            align: "right",
-          })
-          .text(`-$${factura.descuento.toFixed(2)}`, 480, totalesTop + 20, {
-            width: 60,
-            align: "right",
-          });
-      }
-
       doc
-        .text("IVA (15%):", 380, totalesTop + (factura.descuento > 0 ? 40 : 20), {
+        .text("IVA (15%):", 380, totalesTop + 20, {
           width: 100,
           align: "right",
         })
         .text(
           `$${factura.iva.toFixed(2)}`,
           480,
-          totalesTop + (factura.descuento > 0 ? 40 : 20),
+          totalesTop + 20,
           { width: 60, align: "right" }
         );
 
       // TOTAL - destacado
-      const totalTop = totalesTop + (factura.descuento > 0 ? 60 : 40);
+      const totalTop = totalesTop + 40;
       doc
         .fontSize(12)
         .fillColor("#FF4D8D")

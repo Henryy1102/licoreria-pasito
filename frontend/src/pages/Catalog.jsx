@@ -210,11 +210,6 @@ export default function Catalog() {
                 )}
               </div>
               {/* Badge de oferta */}
-              {p.descuento && (
-                <div className="absolute top-2 right-2 bg-primary text-fondo px-3 py-1 rounded-card text-xs font-semibold">
-                  -{p.descuento}%
-                </div>
-              )}
             </Link>
             
             {/* Información del producto */}

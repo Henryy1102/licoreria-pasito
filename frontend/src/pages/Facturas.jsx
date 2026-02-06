@@ -179,14 +179,6 @@ export default function Facturas() {
                     <p className="text-white text-lg mb-2">
                       ${factura.subtotal.toFixed(2)}
                     </p>
-                    {factura.descuento > 0 && (
-                      <>
-                        <p className="text-accent text-sm mb-1">Descuento:</p>
-                        <p className="text-red-400 text-lg mb-2">
-                          -${factura.descuento.toFixed(2)}
-                        </p>
-                      </>
-                    )}
                     <p className="text-accent text-sm mb-1">IVA (15%):</p>
                     <p className="text-white text-lg mb-2">
                       ${factura.iva.toFixed(2)}

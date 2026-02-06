@@ -20,9 +20,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import invoiceRoutes from "./routes/invoice.routes.js";
-import couponRoutes from "./routes/coupon.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
-import loyaltyRoutes from "./routes/loyalty.routes.js";
 import pushRoutes from "./routes/push.routes.js";
 import { connectDB } from "./config/db.js";
 
@@ -46,9 +44,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/invoices", invoiceRoutes);
-app.use("/api/coupons", couponRoutes);
 app.use("/api/reviews", reviewRoutes);
-app.use("/api/loyalty", loyaltyRoutes);
 app.use("/api/push", pushRoutes);
 
 const PORT = process.env.PORT || 4000;

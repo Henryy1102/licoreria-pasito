@@ -55,15 +55,6 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
-    cupon: {
-      codigo: String,
-      tipo: {
-        type: String,
-        enum: ["porcentaje", "monto"],
-      },
-      valor: Number,
-      descuentoAplicado: Number,
-    },
     puntosGanados: {
       type: Number,
       default: 0,

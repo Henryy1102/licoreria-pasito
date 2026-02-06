@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import axios from "axios";
-import { loyaltyService } from "../services/loyaltyService";
 import { pushService } from "../services/pushService";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -16,27 +15,10 @@ export default function Account() {
     telefono: user?.telefono || "",
     password: "",
   });
-  const [puntos, setPuntos] = useState(user?.puntos || 0);
-  const [cuponGenerado, setCuponGenerado] = useState(null);
-  const [loadingPuntos, setLoadingPuntos] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [loadingPush, setLoadingPush] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    const cargarPuntos = async () => {
-      if (user?.rol !== "cliente") return;
-      try {
-        const data = await loyaltyService.obtenerPuntos();
-        setPuntos(data.puntos || 0);
-      } catch (err) {
-        console.error("Error obteniendo puntos:", err);
-      }
-    };
-
-    cargarPuntos();
-  }, [user]);
 
   useEffect(() => {
     const verificarPush = async () => {
@@ -102,9 +84,6 @@ export default function Account() {
               <p className="text-accent"><strong className="text-primary">Email:</strong> {user?.email}</p>
               <p className="text-accent"><strong className="text-primary">Teléfono:</strong> {user?.telefono || "No registrado"}</p>
               <p className="text-accent"><strong className="text-primary">Rol:</strong> <span className="capitalize text-primary">{user?.rol}</span></p>
-              {user?.rol === "cliente" && (
-                <p className="text-accent"><strong className="text-primary">Puntos:</strong> {puntos}</p>
-              )}
             </div>
             <div className="flex flex-wrap gap-3">
               <button className="btn-primary" onClick={() => setEditing(true)}>
@@ -116,39 +95,6 @@ export default function Account() {
                 </Link>
               )}
             </div>
-
-            {user?.rol === "cliente" && (
-              <div className="mt-6 border-t border-primary/20 pt-4">
-                <h3 className="text-lg font-semibold text-primary mb-2">Fidelización</h3>
-                <p className="text-accent text-sm mb-3">
-                  100 puntos = $1 de descuento en un cupón.
-                </p>
-                <button
-                  className="btn-secondary"
-                  disabled={loadingPuntos || puntos < 100}
-                  onClick={async () => {
-                    setLoadingPuntos(true);
-                    setCuponGenerado(null);
-                    try {
-                      const data = await loyaltyService.redimirPuntos();
-                      setPuntos(data.puntosRestantes ?? puntos);
-                      setCuponGenerado(data.cupon || null);
-                    } catch (err) {
-                      setMessage(err.message || "No se pudo redimir puntos");
-                    } finally {
-                      setLoadingPuntos(false);
-                    }
-                  }}
-                >
-                  {loadingPuntos ? "Canjeando..." : "Canjear puntos"}
-                </button>
-                {cuponGenerado && (
-                  <div className="mt-3 bg-green-900/20 border border-green-500 text-green-200 px-3 py-2 rounded">
-                    Cupón generado: <strong>{cuponGenerado.codigo}</strong> (validez hasta {new Date(cuponGenerado.fechaFin).toLocaleDateString()})
-                  </div>
-                )}
-              </div>
-            )}
 
             {user?.rol === "cliente" && (
               <div className="mt-6 border-t border-primary/20 pt-4">

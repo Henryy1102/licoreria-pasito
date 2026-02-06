@@ -61,7 +61,7 @@ export default function OrdenConfirmacion() {
     );
   }
 
-  const { numeroOrden, cliente, productos, subtotal, descuento, impuesto, total, estado, metodoPago, direccionEntrega, createdAt } = ordenActual;
+  const { numeroOrden, cliente, productos, subtotal, impuesto, total, estado, metodoPago, direccionEntrega, createdAt } = ordenActual;
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("es-SV", {
@@ -200,12 +200,6 @@ export default function OrdenConfirmacion() {
               <span>Subtotal:</span>
               <span>${subtotal.toLocaleString()}</span>
             </div>
-            {descuento > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>Descuento:</span>
-                <span>-${descuento.toLocaleString()}</span>
-              </div>
-            )}
             <div className="flex justify-between">
               <span>IVA (13%):</span>
               <span>${impuesto.toLocaleString()}</span>

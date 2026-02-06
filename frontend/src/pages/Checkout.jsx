@@ -7,8 +7,6 @@ import { useOrderStore } from "../store/orderStore";
 import { usePaymentStore } from "../store/paymentStore";
 import GoogleMapsLocation from "../components/GoogleMapsLocation";
 import { actualizarUsuario } from "../services/userService";
-import { couponService } from "../services/couponService";
-import { loyaltyService } from "../services/loyaltyService";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -38,12 +36,6 @@ export default function Checkout() {
   const [metodoPago, setMetodoPago] = useState("efectivo");
   const [notas, setNotas] = useState("");
   const [comprobante, setComprobante] = useState(null);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponInfo, setCouponInfo] = useState(null);
-  const [couponError, setCouponError] = useState("");
-  const [validatingCoupon, setValidatingCoupon] = useState(false);
-  const [redeemingPoints, setRedeemingPoints] = useState(false);
-  const [puntosDisponibles, setPuntosDisponibles] = useState(user?.puntos || 0);
 
   // Handler para ubicación con logging
   const handleUbicacionSelect = (location) => {
@@ -100,16 +92,6 @@ export default function Checkout() {
     prepararCliente();
     cargarSettings();
 
-    const cargarPuntos = async () => {
-      try {
-        const puntos = await loyaltyService.obtenerPuntos();
-        setPuntosDisponibles(puntos.puntos || 0);
-      } catch (err) {
-        console.error("Error cargando puntos:", err);
-      }
-    };
-
-    cargarPuntos();
   }, [user, navigate, obtenerCliente, obtenerSettings]);
 
   if (carrito.length === 0) {
@@ -134,57 +116,7 @@ export default function Checkout() {
   };
 
   const subtotal = calcularSubtotal();
-  const descuentoCupon = couponInfo?.descuento || 0;
-  const total = Math.max(0, subtotal - descuentoCupon);
-
-  const handleAplicarCupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError("Ingresa un código de cupón");
-      return;
-    }
-
-    setValidatingCoupon(true);
-    setCouponError("");
-
-    try {
-      const data = await couponService.validarCupon(couponCode.trim(), subtotal);
-      setCouponInfo({
-        codigo: data.codigo,
-        descuento: data.descuento,
-        tipo: data.tipo,
-        valor: data.valor,
-      });
-    } catch (err) {
-      setCouponInfo(null);
-      setCouponError(err.message || "Cupón inválido");
-    } finally {
-      setValidatingCoupon(false);
-    }
-  };
-
-  const handleRedimirPuntos = async () => {
-    setRedeemingPoints(true);
-    setCouponError("");
-    try {
-      const data = await loyaltyService.redimirPuntos();
-      const codigo = data?.cupon?.codigo;
-      if (codigo) {
-        setCouponCode(codigo);
-        const validado = await couponService.validarCupon(codigo, subtotal);
-        setCouponInfo({
-          codigo: validado.codigo,
-          descuento: validado.descuento,
-          tipo: validado.tipo,
-          valor: validado.valor,
-        });
-        setPuntosDisponibles(data.puntosRestantes ?? puntosDisponibles);
-      }
-    } catch (err) {
-      setCouponError(err.message || "No se pudieron redimir los puntos");
-    } finally {
-      setRedeemingPoints(false);
-    }
-  };
+  const total = subtotal;
 
   const handleCrearOrden = async () => {
     if (paso === 1) {
@@ -266,9 +198,7 @@ export default function Checkout() {
         const ordenData = {
           clienteId: cliente?._id,
           productos,
-          descuento: 0,
           impuesto: 0,
-          couponCode: couponInfo?.codigo || undefined,
           metodoPago,
           ubicacion,
           requiereFactura: requiereFactura === true,
@@ -348,59 +278,6 @@ export default function Checkout() {
                     </div>
                   ))}
                 </div>
-
-                <div className="mt-6 border-t border-primary/20 pt-6">
-                  <h3 className="text-lg font-semibold text-primary mb-3">
-                    Cupones y puntos
-                  </h3>
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      placeholder="Código de cupón"
-                      className="input flex-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAplicarCupon}
-                      disabled={validatingCoupon}
-                      className="btn-primary whitespace-nowrap"
-                    >
-                      {validatingCoupon ? "Validando..." : "Aplicar"}
-                    </button>
-                  </div>
-
-                  {couponError && (
-                    <p className="mt-2 text-sm text-red-300">{couponError}</p>
-                  )}
-
-                  {couponInfo && (
-                    <div className="mt-3 bg-green-900/20 border border-green-500 text-green-200 px-3 py-2 rounded">
-                      Cupón aplicado: <strong>{couponInfo.codigo}</strong> (-$
-                      {couponInfo.descuento.toLocaleString()})
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex flex-wrap items-center gap-3 text-accent">
-                    <span>
-                      Puntos disponibles: <strong>{puntosDisponibles}</strong>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleRedimirPuntos}
-                      disabled={redeemingPoints || puntosDisponibles < 100}
-                      className="btn-secondary"
-                    >
-                      {redeemingPoints ? "Canjeando..." : "Canjear puntos"}
-                    </button>
-                    <span className="text-xs text-accent/80">
-                      100 puntos = $1 de descuento
-                    </span>
-                  </div>
-                </div>
-
 
               </div>
             )}
@@ -805,10 +682,6 @@ export default function Checkout() {
                       <span>Subtotal:</span>
                       <span>${subtotal.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Descuento:</span>
-                      <span>-${descuentoCupon.toLocaleString()}</span>
-                    </div>
                     <div className="flex justify-between font-bold text-lg text-primary">
                       <span>Total:</span>
                       <span>${total.toLocaleString()}</span>
@@ -830,10 +703,6 @@ export default function Checkout() {
                 <div className="flex justify-between text-accent mb-1">
                   <span>Subtotal:</span>
                   <span>${subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-accent mb-2">
-                  <span>Descuento:</span>
-                  <span>-${descuentoCupon.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-primary">
                   <span>Total:</span>

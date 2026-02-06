@@ -11,7 +11,6 @@ import AdminAudit from "./pages/AdminAudit";
 import AdminSettings from "./pages/AdminSettings";
 import AdminPagos from "./pages/AdminPagos";
 import AdminReportes from "./pages/AdminReportes";
-import AdminCupones from "./pages/AdminCupones";
 import Catalog from "./pages/Catalog";
 import Cart from "./pages/Cart";
 import Account from "./pages/Account";
@@ -150,14 +149,6 @@ function App() {
             }
           />
 
-          <Route
-            path="/admin/cupones"
-            element={
-              <AdminRoute>
-                <AdminCupones />
-              </AdminRoute>
-            }
-          />
 
           <Route
             path="/catalog"

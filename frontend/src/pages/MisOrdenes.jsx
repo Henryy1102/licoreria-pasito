@@ -202,12 +202,6 @@ export default function MisOrdenes() {
                           <span>Subtotal:</span>
                           <span>${orden.subtotal.toLocaleString()}</span>
                         </div>
-                        {orden.descuento > 0 && (
-                          <div className="flex justify-between text-green-400">
-                            <span>Descuento:</span>
-                            <span>-${orden.descuento.toLocaleString()}</span>
-                          </div>
-                        )}
                         <div className="flex justify-between">
                           <span>IVA (13%):</span>
                           <span>${orden.impuesto.toLocaleString()}</span>

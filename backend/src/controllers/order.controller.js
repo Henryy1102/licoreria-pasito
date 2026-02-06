@@ -5,12 +5,11 @@ import User from "../models/Users.js";
 import Invoice from "../models/Invoice.js";
 import { createAuditLog } from "./audit.controller.js";
 import { crearNotificacion } from "./notification.controller.js";
-import { registrarUsoCupon, validarCupon } from "./coupon.controller.js";
 
 // Crear nueva orden
 export const crearOrden = async (req, res) => {
   try {
-    const { clienteId: clienteIdFromBody, productos, descuento, impuesto, metodoPago, ubicacion, notas, comprobante, datosFacturacion, requiereFactura, couponCode } = req.body;
+    const { clienteId: clienteIdFromBody, productos, impuesto, metodoPago, ubicacion, notas, comprobante, datosFacturacion, requiereFactura } = req.body;
     const usuarioId = req.user._id; // Del middleware de autenticación
     
     // Debug: Log para verificar que se recibe la ubicación
@@ -100,26 +99,7 @@ export const crearOrden = async (req, res) => {
     }
 
     // Calcular totales
-    const descuentoManual = Number(descuento) || 0;
-    let descuentoCupon = 0;
-    let cuponAplicado = null;
-
-    if (couponCode) {
-      const resultadoCupon = await validarCupon({
-        codigo: couponCode,
-        subtotal,
-        usuarioId,
-      });
-
-      if (!resultadoCupon.valido) {
-        return res.status(400).json({ error: resultadoCupon.error });
-      }
-
-      descuentoCupon = resultadoCupon.descuento;
-      cuponAplicado = resultadoCupon.cupon;
-    }
-
-    const descuentoAmount = Math.max(0, descuentoManual + descuentoCupon);
+    const descuentoAmount = 0;
     // Los precios ya incluyen IVA; no aplicar impuesto adicional
     const impuestoAmount = impuesto ?? 0;
     const total = Math.max(0, subtotal - descuentoAmount + impuestoAmount);
@@ -142,14 +122,6 @@ export const crearOrden = async (req, res) => {
       descuento: descuentoAmount,
       impuesto: impuestoAmount,
       total,
-      cupon: cuponAplicado
-        ? {
-            codigo: cuponAplicado.codigo,
-            tipo: cuponAplicado.tipo,
-            valor: cuponAplicado.valor,
-            descuentoAplicado: descuentoCupon,
-          }
-        : undefined,
       metodoPago,
       ubicacion: ubicacion || {},
       datosFacturacion: datosFacturacion || undefined,
@@ -168,13 +140,6 @@ export const crearOrden = async (req, res) => {
 
     await nuevaOrden.save();
 
-    if (cuponAplicado) {
-      await registrarUsoCupon({
-        cuponId: cuponAplicado._id,
-        usuarioId,
-      });
-    }
-    
     // Debug: Verificar que se guardó correctamente
     console.log("[OK] Orden guardada con ubicacion:", nuevaOrden.ubicacion);
 

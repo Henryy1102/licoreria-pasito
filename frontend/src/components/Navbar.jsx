@@ -72,7 +72,6 @@ export default function Navbar() {
                   <NavLink to="/admin/pagos" className={navLinkClass}>Pagos</NavLink>
                   <NavLink to="/facturas" className={navLinkClass}>Facturas</NavLink>
                   <NavLink to="/admin/reportes" className={navLinkClass}>Reportes</NavLink>
-                  <NavLink to="/admin/cupones" className={navLinkClass}>Cupones</NavLink>
                   <NavLink to="/admin/auditoria" className={navLinkClass}>Auditoría</NavLink>
                 </>
               ) : (
@@ -207,7 +206,6 @@ export default function Navbar() {
                   <NavLink to="/admin/pagos" className={navLinkClass} onClick={() => setMenuMovilAbierto(false)}>Pagos</NavLink>
                   <NavLink to="/facturas" className={navLinkClass} onClick={() => setMenuMovilAbierto(false)}>Facturas</NavLink>
                   <NavLink to="/admin/reportes" className={navLinkClass} onClick={() => setMenuMovilAbierto(false)}>Reportes</NavLink>
-                  <NavLink to="/admin/cupones" className={navLinkClass} onClick={() => setMenuMovilAbierto(false)}>Cupones</NavLink>
                   <NavLink to="/admin/auditoria" className={navLinkClass} onClick={() => setMenuMovilAbierto(false)}>Auditoría</NavLink>
                 </>
               ) : (
