@@ -101,7 +101,7 @@ async function generarPDFFactura(factura, outputPath = null) {
       doc
         .fontSize(10)
         .fillColor("#000000")
-        .text(`Razón Social: ${razonSocial}`, 50, 180)
+        .text(`Nombre: ${razonSocial}`, 50, 180)
         .text(`Correo: ${correo}`, 50, 195);
 
       if (tipoIdentificacion || numeroIdentificacion) {
