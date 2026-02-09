@@ -5,7 +5,7 @@ import { useAuthStore } from "../store/authStore";
 import { useClientStore } from "../store/clientStore";
 import { useOrderStore } from "../store/orderStore";
 import { usePaymentStore } from "../store/paymentStore";
-import GoogleMapsLocation from "../components/GoogleMapsLocation";
+import LocationSelector from "../components/LocationSelector";
 import { actualizarUsuario } from "../services/userService";
 
 export default function Checkout() {
@@ -164,9 +164,11 @@ export default function Checkout() {
     }
 
     if (paso === 3) {
-      // Validar ubicación - ahora solo validamos que tenga el link
-      if (!ubicacion || !ubicacion.link || ubicacion.link.trim() === "") {
-        setError("Por favor pega tu link de ubicación de Google Maps");
+      // Validar ubicación - puede ser por dirección o por link de Google Maps
+      if (!ubicacion || (!ubicacion.direccion && !ubicacion.link) || 
+          (ubicacion.direccion && ubicacion.direccion.trim() === "") ||
+          (ubicacion.link && ubicacion.link.trim() === "")) {
+        setError("Por favor ingresa tu ubicación de entrega");
         return;
       }
       
@@ -189,9 +191,11 @@ export default function Checkout() {
           cantidad: item.cantidad,
         }));
 
-        // Validar que ubicación tiene link
-        if (!ubicacion || !ubicacion.link || ubicacion.link.trim() === "") {
-          setError("Por favor pega tu link de ubicación de Google Maps antes de confirmar");
+        // Validar que ubicación tiene link o dirección
+        if (!ubicacion || (!ubicacion.link && !ubicacion.direccion) || 
+            (ubicacion.link && ubicacion.link.trim() === "") ||
+            (ubicacion.direccion && ubicacion.direccion.trim() === "")) {
+          setError("Por favor completa tu ubicación de entrega antes de confirmar");
           return;
         }
 
@@ -435,12 +439,12 @@ export default function Checkout() {
               </div>
             )}
 
-            {/* Paso 3: Ubicación con Google Maps */}
+            {/* Paso 3: Ubicación - Mejorado */}
             {paso === 3 && (
               <div className="bg-secondary rounded-lg shadow-md p-6 border border-primary/20">
                 <h2 className="text-2xl font-bold text-primary mb-6">📍 Selecciona tu Ubicación de Entrega</h2>
 
-                <GoogleMapsLocation
+                <LocationSelector
                   onLocationSelect={handleUbicacionSelect}
                   initialLocation={ubicacion}
                 />
@@ -595,81 +599,155 @@ export default function Checkout() {
                         </div>
                       </div>
 
-                      {/* Upload Comprobante */}
+                      {/* Upload Comprobante - Mejorado */}
                       <div className="mt-6 border-t border-blue-300 pt-6">
-                        <h4 className="font-bold text-blue-900 mb-3">📸 Subir Comprobante</h4>
-                        <p className="text-sm text-blue-800 mb-3">
-                          Por favor, sube una captura o foto de tu comprobante de transferencia para verificación
+                        <h4 className="font-bold text-blue-900 mb-2">📸 Subir Comprobante de Pago</h4>
+                        <p className="text-sm text-blue-800 mb-4">
+                          📝 Por favor, sube una captura o foto de tu comprobante de transferencia (mostrar: número de referencia, monto, fecha y banco)
                         </p>
-                        <div className="bg-white rounded-lg border-2 border-dashed border-blue-300 p-4">
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                // Limitar tamaño de archivo a 5MB
-                                if (file.size > 5 * 1024 * 1024) {
-                                  setError("El archivo es muy grande (máximo 5MB). Por favor comprime la imagen.");
-                                  return;
-                                }
-                                
-                                const reader = new FileReader();
-                                reader.onload = (event) => {
-                                  let data = event.target.result;
+                        
+                        {/* Área de carga */}
+                        <div className="bg-white rounded-lg border-3 border-dashed border-blue-300 p-6 hover:bg-blue-50 transition">
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">📄</div>
+                            <input
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  // Validar tipo de archivo
+                                  const validTypes = ["image/jpeg", "image/png", "image/gif", "application/pdf", "image/webp"];
+                                  if (!validTypes.includes(file.type)) {
+                                    setError("Formato no válido. Acepta: JPG, PNG, GIF, PDF");
+                                    return;
+                                  }
+
+                                  // Limitar tamaño de archivo a 10MB
+                                  if (file.size > 10 * 1024 * 1024) {
+                                    setError("El archivo es muy grande (máximo 10MB)");
+                                    return;
+                                  }
                                   
-                                  // Si es imagen, comprimir
-                                  if (file.type.startsWith("image/") && file.type !== "image/pdf") {
-                                    const img = new Image();
-                                    img.onload = () => {
-                                      const canvas = document.createElement("canvas");
-                                      let width = img.width;
-                                      let height = img.height;
-                                      
-                                      // Reducir tamaño si es muy grande
-                                      if (width > 1200) {
-                                        height = (height * 1200) / width;
-                                        width = 1200;
-                                      }
-                                      
-                                      canvas.width = width;
-                                      canvas.height = height;
-                                      const ctx = canvas.getContext("2d");
-                                      ctx.drawImage(img, 0, 0, width, height);
-                                      
-                                      // Convertir a Base64 con compresión
-                                      data = canvas.toDataURL("image/jpeg", 0.7);
-                                      
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    let data = event.target.result;
+                                    
+                                    // Si es imagen, comprimir
+                                    if (file.type.startsWith("image/")) {
+                                      const img = new Image();
+                                      img.onload = () => {
+                                        const canvas = document.createElement("canvas");
+                                        let width = img.width;
+                                        let height = img.height;
+                                        
+                                        // Reducir tamaño si es muy grande
+                                        if (width > 1200) {
+                                          height = (height * 1200) / width;
+                                          width = 1200;
+                                        }
+                                        
+                                        canvas.width = width;
+                                        canvas.height = height;
+                                        const ctx = canvas.getContext("2d");
+                                        ctx.drawImage(img, 0, 0, width, height);
+                                        
+                                        // Convertir a Base64 con compresión
+                                        data = canvas.toDataURL("image/jpeg", 0.75);
+                                        
+                                        setComprobante({
+                                          data,
+                                          nombre: file.name,
+                                          tipo: file.type,
+                                        });
+                                        setError("");
+                                      };
+                                      img.src = event.target.result;
+                                    } else {
+                                      // Para PDFs, usar directamente
                                       setComprobante({
                                         data,
                                         nombre: file.name,
+                                        tipo: file.type,
                                       });
-                                    };
-                                    img.src = event.target.result;
-                                  } else {
-                                    // Para PDFs, usar directamente
-                                    setComprobante({
-                                      data,
-                                      nombre: file.name,
-                                    });
-                                  }
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
-                            className="w-full"
-                          />
+                                      setError("");
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              className="hidden"
+                              id="comprobante-input"
+                            />
+                            <label htmlFor="comprobante-input" className="cursor-pointer block">
+                              <p className="text-sm font-semibold text-blue-700 mb-2">Haz clic para seleccionar o arrastra un archivo</p>
+                              <p className="text-xs text-blue-600">JPG, PNG, GIF o PDF (máx. 10MB)</p>
+                            </label>
+                          </div>
+                          
+                          {/* Vista previa del archivo */}
                           {comprobante && (
-                            <div className="mt-3 p-2 bg-green-50 rounded border border-green-300">
-                              <p className="text-sm text-green-700">
-                                ✅ Archivo seleccionado: {comprobante.nombre}
-                              </p>
+                            <div className="mt-4 pt-4 border-t border-blue-300">
+                              {comprobante.tipo?.startsWith("image/") ? (
+                                <div className="flex gap-4 items-start">
+                                  <img 
+                                    src={comprobante.data} 
+                                    alt="Comprobante" 
+                                    className="h-20 w-20 object-cover rounded border border-blue-300"
+                                  />
+                                  <div className="flex-1">
+                                    <p className="text-sm font-semibold text-green-700">✅ Imagen cargada</p>
+                                    <p className="text-xs text-gray-600 break-all mt-1">{comprobante.nombre}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => setComprobante(null)}
+                                      className="text-xs text-red-600 hover:text-red-800 mt-2 font-semibold"
+                                    >
+                                      🗑️ Eliminar
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex gap-4 items-start">
+                                  <div className="h-20 w-20 rounded border border-blue-300 flex items-center justify-center bg-blue-50">
+                                    <span className="text-2xl">📄</span>
+                                  </div>
+                                  <div className="flex-1">
+                                    <p className="text-sm font-semibold text-green-700">✅ PDF cargado</p>
+                                    <p className="text-xs text-gray-600 break-all mt-1">{comprobante.nombre}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => setComprobante(null)}
+                                      className="text-xs text-red-600 hover:text-red-800 mt-2 font-semibold"
+                                    >
+                                      🗑️ Eliminar
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
+
+                        {/* Validación */}
                         {metodoPago === "transferencia" && !comprobante && (
-                          <p className="text-sm text-yellow-600 mt-2">⚠️ Debes subir el comprobante para continuar</p>
+                          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-400 rounded">
+                            <p className="text-sm text-yellow-800">
+                              <strong>⚠️ Importante:</strong> Debes subir el comprobante para continuar con tu pedido
+                            </p>
+                          </div>
                         )}
+                        
+                        {/* Consejos */}
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-300 rounded text-xs text-blue-800">
+                          <p className="font-semibold mb-1">💡 Consejos para tu comprobante:</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            <li>Asegúrate de que sea legible</li>
+                            <li>Incluya número de referencia y fecha</li>
+                            <li>Muestre el monto transferido</li>
+                            <li>Sea una foto con buena iluminación</li>
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   )}

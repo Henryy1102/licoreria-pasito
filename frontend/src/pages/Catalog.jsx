@@ -10,12 +10,14 @@ export default function Catalog() {
   const { products, fetchProducts, loading, error } = useProductStore();
   const { addToCart } = useCartStore();
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchCode, setSearchCode] = useState("");
   const [addedProduct, setAddedProduct] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [recomendados, setRecomendados] = useState([]);
   const [loadingRecomendados, setLoadingRecomendados] = useState(false);
+  const [searchMode, setSearchMode] = useState("nombre"); // "nombre" o "codigo"
 
   useEffect(() => {
     fetchProducts();
@@ -55,10 +57,36 @@ export default function Catalog() {
     return colors[categoria?.toLowerCase()] || 'bg-gray-100 text-gray-800 border-gray-300';
   };
 
-  let filteredProducts = products.filter((p) =>
-    p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  let filteredProducts = products.filter((p) => {
+    // Búsqueda por nombre o categoría
+    const matchesSearchName = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.categoria?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Búsqueda por código
+    const matchesSearchCode = p.codigo ? 
+      p.codigo.toLowerCase().includes(searchCode.toLowerCase()) : 
+      false;
+    
+    // Si hay búsqueda activa, aplicarla según el modo
+    if (searchTerm && searchMode === "nombre") {
+      return matchesSearchName;
+    }
+    if (searchCode && searchMode === "codigo") {
+      return matchesSearchCode;
+    }
+    
+    // Si no hay búsqueda específica, mostrar todos
+    if (!searchTerm && !searchCode) {
+      return true;
+    }
+    
+    // Si hay ambas búsquedas, combinar
+    if (searchTerm && searchCode) {
+      return matchesSearchName && matchesSearchCode;
+    }
+    
+    return matchesSearchName || matchesSearchCode;
+  });
 
   // Filtrar por categoría
   if (selectedCategory) {
@@ -130,15 +158,32 @@ export default function Catalog() {
 
         {/* Barra de búsqueda mejorada */}
         <div className="card mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 mb-6">
-            {/* Búsqueda */}
+          <div className="flex flex-col gap-4 mb-6">
+            {/* Búsqueda por nombre */}
             <div className="flex-1">
+              <label className="block text-sm font-semibold text-textMain mb-2">
+                🔍 Buscar por nombre o categoría
+              </label>
               <input
                 type="text"
                 className="w-full px-4 py-3 bg-fondo border border-slate-700 rounded-card focus:outline-none focus:border-primary text-textMain placeholder-subtext transition-all text-sm sm:text-base"
-                placeholder="Buscar productos..."
+                placeholder="Ej: Ron, Whisky, Cerveza..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            {/* Búsqueda por código */}
+            <div className="flex-1">
+              <label className="block text-sm font-semibold text-textMain mb-2">
+                📦 Buscar por código de producto
+              </label>
+              <input
+                type="text"
+                className="w-full px-4 py-3 bg-fondo border border-slate-700 rounded-card focus:outline-none focus:border-primary text-textMain placeholder-subtext transition-all text-sm sm:text-base"
+                placeholder="Ej: SKU-001, PROD-123..."
+                value={searchCode}
+                onChange={(e) => setSearchCode(e.target.value)}
               />
             </div>
           </div>
@@ -214,6 +259,15 @@ export default function Catalog() {
             
             {/* Información del producto */}
             <div className="p-4 flex flex-col flex-1">
+              {/* Código del producto */}
+              {p.codigo && (
+                <div className="mb-2">
+                  <span className="text-xs font-mono text-subtext bg-fondo px-2 py-1 rounded border border-slate-700">
+                    Código: {p.codigo}
+                  </span>
+                </div>
+              )}
+              
               {/* Categoría */}
               {p.categoria && (
                 <div className="mb-3">
