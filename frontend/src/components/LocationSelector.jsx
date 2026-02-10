@@ -2,110 +2,92 @@ import { useState, useEffect, useRef } from "react";
 
 export default function LocationSelector({ onLocationSelect, initialLocation }) {
   const [direccion, setDireccion] = useState(initialLocation?.direccion || "");
-  const [sugerencias, setSugerencias] = useState([]);
-  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   const [error, setError] = useState("");
   const [ubicacionConfirmada, setUbicacionConfirmada] = useState(false);
   const [latLng, setLatLng] = useState(initialLocation?.latitud && initialLocation?.longitud ? { lat: initialLocation.latitud, lng: initialLocation.longitud } : null);
   const [modoAlternativo, setModoAlternativo] = useState(false);
   const [linkGoogle, setLinkGoogle] = useState(initialLocation?.link || "");
   const inputRef = useRef(null);
-  const autocompleteServiceRef = useRef(null);
-  const geocoderRef = useRef(null);
+  const autocompleteRef = useRef(null);
 
-  // Inicializar Google Places Autocomplete y Geocoder
+  // Inicializar Google Places Autocomplete
   useEffect(() => {
-    if (window.google && window.google.maps) {
-      if (window.google.maps.places) {
-        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-      }
-      geocoderRef.current = new window.google.maps.Geocoder();
-    }
-  }, []);
+    if (!inputRef.current) return;
 
-  // Manejar búsqueda con autocompletado
-  const handleInputChange = (value) => {
-    setDireccion(value);
-    setUbicacionConfirmada(false);
-    setSugerencias([]);
-    
-    if (!value.trim()) {
-      setMostrarSugerencias(false);
-      return;
-    }
-
-    if (!autocompleteServiceRef.current) {
-      console.error("Google Places no está disponible");
-      setError("Google Places no está disponible. Recarga la página.");
-      return;
-    }
-
-    const request = {
-      input: value,
-      componentRestrictions: { country: 'ec' },
-    };
-
-    // Usar callback en lugar de await
-    autocompleteServiceRef.current.getPlacePredictions(request, (predictions, status) => {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-        console.log("📍 Sugerencias obtenidas:", predictions);
-        setSugerencias(predictions);
-        setMostrarSugerencias(true);
-        setError("");
-      } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-        console.log("Sin resultados");
-        setSugerencias([]);
-        setMostrarSugerencias(false);
-      } else {
-        console.error("Error en autocomplete:", status);
-        setSugerencias([]);
-        setMostrarSugerencias(false);
-      }
-    });
-  };
-
-  // Seleccionar una sugerencia y obtener detalles
-  const handleSelectSugerencia = (placeId, descripcion) => {
-    setDireccion(descripcion);
-    setMostrarSugerencias(false);
-    
-    console.log("🔍 Obteniendo detalles del lugar:", placeId);
-
-    if (!geocoderRef.current) {
-      setError("Geocoder no está disponible");
-      return;
-    }
-
-    // Usar Geocoder para obtener coordenadas
-    geocoderRef.current.geocode({ address: descripcion }, (results, status) => {
-      if (status === window.google.maps.GeocoderStatus.OK && results && results.length > 0) {
-        const location = results[0].geometry.location;
-        const latitud = location.lat();
-        const longitud = location.lng();
-        
-        console.log("✅ Coordenadas obtenidas:", { latitud, longitud });
-        
-        setLatLng({ lat: latitud, lng: longitud });
-        setError("");
-
-        // Enviar al componente padre
-        onLocationSelect({
-          direccion: results[0].formatted_address || descripcion,
-          latitud,
-          longitud,
-          modoUbicacion: "autocomplete",
+    if (window.google && window.google.maps && window.google.maps.places) {
+      try {
+        autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+          types: ["address"],
+          componentRestrictions: { country: "ec" }, // Ecuador
         });
-        
-        setUbicacionConfirmada(true);
-      } else {
-        console.error("Error al geocodificar:", status);
-        setError("No se pudo confirmar la ubicación. Intenta de nuevo.");
+
+        // Escuchar cambios cuando el usuario selecciona una dirección
+        autocompleteRef.current.addListener("place_changed", () => {
+          const place = autocompleteRef.current.getPlace();
+
+          if (!place.geometry) {
+            setError("Por favor selecciona una dirección de las sugerencias");
+            return;
+          }
+
+          const latitud = place.geometry.location.lat();
+          const longitud = place.geometry.location.lng();
+          const formattedAddress = place.formatted_address;
+
+          console.log("📍 Ubicación seleccionada:", { latitud, longitud, formattedAddress });
+
+          setDireccion(formattedAddress);
+          setLatLng({ lat: latitud, lng: longitud });
+          setError("");
+
+          // Enviar al componente padre
+          onLocationSelect({
+            direccion: formattedAddress,
+            latitud,
+            longitud,
+            modoUbicacion: "autocomplete",
+          });
+
+          setUbicacionConfirmada(true);
+        });
+      } catch (err) {
+        console.error("Error inicializando Autocomplete:", err);
+        setError("No se pudo inicializar el autocompletado de ubicación");
       }
-    });
-  };
+    } else {
+      console.warn("Google Maps no está cargado");
+      setError("Google Maps no está disponible");
+    }
+  }, [onLocationSelect]);
 
   // Modo alternativo: Link de Google Maps
   const handleGoogleMapsLink = () => {
+    setError("");
+    
+    if (!linkGoogle.trim()) {
+      setError("Por favor pega un link de Google Maps válido");
+      return;
+    }
+
+    const esLinkValido = 
+      linkGoogle.includes("google.com/maps") || 
+      linkGoogle.includes("maps.google.com") ||
+      linkGoogle.includes("goo.gl") || 
+      linkGoogle.includes("maps.app.goo.gl");
+    
+    if (!esLinkValido) {
+      setError("El link debe ser de Google Maps");
+      return;
+    }
+
+    onLocationSelect({
+      direccion: "Ubicación desde Google Maps",
+      link: linkGoogle.trim(),
+      modoUbicacion: "google-link",
+    });
+    
+    setUbicacionConfirmada(true);
+  };
     setError("");
     
     if (!linkGoogle.trim()) {
@@ -146,36 +128,17 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
         </p>
 
         <div className="space-y-3">
-          {/* Campo de entrada con autocomplete */}
+          {/* Campo de entrada con autocomplete nativo de Google */}
           <div className="relative">
             <input
               ref={inputRef}
               type="text"
               value={direccion}
-              onChange={(e) => handleInputChange(e.target.value)}
+              onChange={(e) => setDireccion(e.target.value)}
               placeholder="Ej: Calle Principal 123, Riobamba..."
               className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-700 font-semibold"
             />
-            
-            {/* Sugerencias de Google */}
-            {mostrarSugerencias && sugerencias.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-blue-300 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
-                {sugerencias.map((suggestion, index) => (
-                  <button
-                    key={`${suggestion.place_id}-${index}`}
-                    type="button"
-                    onClick={() => {
-                      console.log("🖱️ Seleccionado:", suggestion.description);
-                      handleSelectSugerencia(suggestion.place_id, suggestion.description);
-                    }}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-100 border-b border-blue-200 last:border-b-0 transition cursor-pointer"
-                  >
-                    <p className="text-gray-800 font-semibold text-sm">{suggestion.main_text}</p>
-                    <p className="text-xs text-gray-600">{suggestion.secondary_text}</p>
-                  </button>
-                ))}
-              </div>
-            )}
+            <p className="text-xs text-blue-600 mt-2">Google sugiere automáticamente mientras escribes ↓</p>
           </div>
 
           {/* Indicador de posición */}
