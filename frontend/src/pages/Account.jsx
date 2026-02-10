@@ -84,43 +84,43 @@ export default function Account() {
           </>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-primary font-semibold mb-2">Nombre</label>
+            <div className="mb-6">
+              <h3 className="text-primary font-bold text-lg mb-3">Nombre</h3>
               <input
                 type="text"
-                className="input"
+                className="input w-full"
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 required
               />
             </div>
 
-            <div className="mb-4">
-              <label className="block text-secondary font-semibold mb-2">Email</label>
+            <div className="mb-6">
+              <h3 className="text-primary font-bold text-lg mb-3">Email</h3>
               <input
                 type="email"
-                className="input"
+                className="input w-full"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
               />
             </div>
 
-            <div className="mb-4">
-              <label className="block text-secondary font-semibold mb-2">Teléfono</label>
+            <div className="mb-6">
+              <h3 className="text-primary font-bold text-lg mb-3">Teléfono</h3>
               <input
                 type="tel"
-                className="input"
+                className="input w-full"
                 value={form.telefono}
                 onChange={(e) => setForm({ ...form, telefono: e.target.value })}
               />
             </div>
 
             <div className="mb-6">
-              <label className="block text-secondary font-semibold mb-2">Nueva Contraseña (opcional)</label>
+              <h3 className="text-primary font-bold text-lg mb-3">Nueva Contraseña</h3>
               <input
                 type="password"
-                className="input"
+                className="input w-full"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Dejar en blanco para no cambiar"
