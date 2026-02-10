@@ -8,6 +8,9 @@ export default function AdminProducts() {
   const [form, setForm] = useState({ nombre: "", descripcion: "", categoria: "licor", precio: 0, stock: 0, imagen: "" });
   const [imagenPreview, setImagenPreview] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroCategoria, setFiltroCategoria] = useState("");
+  const [filtroStock, setFiltroStock] = useState("");
 
   useEffect(() => {
     fetchProducts();
@@ -58,6 +61,26 @@ export default function AdminProducts() {
     setImagenPreview(product.imagen);
     setEditingId(product._id);
   };
+
+  const productosFiltrados = products.filter((producto) => {
+    const nombre = (producto.nombre || "").toLowerCase();
+    const descripcion = (producto.descripcion || "").toLowerCase();
+    const coincideBusqueda =
+      busqueda.trim() === "" ||
+      nombre.includes(busqueda.toLowerCase()) ||
+      descripcion.includes(busqueda.toLowerCase());
+
+    const coincideCategoria =
+      filtroCategoria === "" || (producto.categoria || "").toLowerCase() === filtroCategoria;
+
+    const stock = Number(producto.stock || 0);
+    const coincideStock =
+      filtroStock === "" ||
+      (filtroStock === "con-stock" && stock > 0) ||
+      (filtroStock === "sin-stock" && stock === 0);
+
+    return coincideBusqueda && coincideCategoria && coincideStock;
+  });
 
   return (
     <div className="min-h-screen bg-fondo">
@@ -132,6 +155,36 @@ export default function AdminProducts() {
           <h2 className="text-lg sm:text-xl font-semibold text-primary">Inventario</h2>
           {loading && <span className="text-xs sm:text-sm text-subtext">Cargando...</span>}
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <input
+            className="input text-sm sm:text-base"
+            placeholder="Buscar por nombre o descripcion"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+          <select
+            className="input text-sm sm:text-base"
+            value={filtroCategoria}
+            onChange={(e) => setFiltroCategoria(e.target.value)}
+          >
+            <option value="">Todas las categorias</option>
+            {CATEGORIAS.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </option>
+            ))}
+          </select>
+          <select
+            className="input text-sm sm:text-base"
+            value={filtroStock}
+            onChange={(e) => setFiltroStock(e.target.value)}
+          >
+            <option value="">Todo el stock</option>
+            <option value="con-stock">Con stock</option>
+            <option value="sin-stock">Sin stock</option>
+          </select>
+        </div>
         <div className="overflow-x-auto -mx-4 sm:mx-0">
           <table className="min-w-full text-left">
             <thead>
@@ -144,7 +197,7 @@ export default function AdminProducts() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {productosFiltrados.map((p) => (
                 <tr key={p._id} className="border-b border-primary/10 hover:bg-secondary/80 transition">
                   <td className="py-2 px-2 sm:px-3 text-textMain text-xs sm:text-sm md:text-base">{p.nombre}</td>
                   <td className="py-2 px-2 sm:px-3 capitalize text-accent text-xs sm:text-sm md:text-base">{p.categoria || "-"}</td>
@@ -156,7 +209,7 @@ export default function AdminProducts() {
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && (
+              {productosFiltrados.length === 0 && (
                 <tr>
                   <td className="py-4 px-2 sm:px-3 text-subtext text-xs sm:text-sm" colSpan={5}>No hay productos</td>
                 </tr>
