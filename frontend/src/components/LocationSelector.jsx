@@ -191,18 +191,6 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
             </div>
           )}
         </div>
-
-        {/* Ventajas */}
-        <div className="mt-4 p-3 bg-blue-100 border border-blue-300 rounded-lg">
-          <p className="text-sm font-semibold text-blue-900 mb-2">✨ Ventajas:</p>
-          <ul className="text-xs text-blue-800 space-y-1">
-            <li>✓ 1 solo campo (muy rápido)</li>
-            <li>✓ Google sugiere automáticamente</li>
-            <li>✓ Dirección validada y precisa</li>
-            <li>✓ Captura coordenadas exactas</li>
-            <li>✓ Menos errores de tipeo</li>
-          </ul>
-        </div>
       </div>
 
       {/* Modo alternativo: Pegar link de Google Maps */}
