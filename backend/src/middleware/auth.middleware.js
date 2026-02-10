@@ -5,7 +5,10 @@ export const auth = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "No autorizado" });
+    return res.status(401).json({ 
+      error: "No autorizado",
+      message: "Falta el token de autenticación" 
+    });
   }
 
   try {
@@ -32,8 +35,21 @@ export const auth = async (req, res, next) => {
 
     req.user = userPayload;
     next();
-  } catch {
-    res.status(401).json({ message: "Token inválido" });
+  } catch (error) {
+    console.error("[AUTH ERROR]", error.message);
+    
+    // Diferenciar tipos de error
+    let errorMsg = "Token inválido";
+    if (error.name === "TokenExpiredError") {
+      errorMsg = "Tu sesión ha expirado. Por favor inicia sesión nuevamente.";
+    } else if (error.name === "JsonWebTokenError") {
+      errorMsg = "Token no válido. Por favor inicia sesión nuevamente.";
+    }
+    
+    res.status(401).json({ 
+      error: errorMsg,
+      message: errorMsg 
+    });
   }
 };
 

@@ -193,7 +193,18 @@ export default function Checkout() {
       limpiarCarrito();
       navigate(`/orden-confirmacion/${resultado.orden._id}`);
     } catch (err) {
-      setError(err.message);
+      const errorMsg = err.message || "Error al crear la orden";
+      
+      // Detectar errores de autenticación
+      if (errorMsg.includes("expirado") || errorMsg.includes("sesión") || errorMsg.includes("No estás autenticado")) {
+        setError("Tu sesión ha expirado. Redirigiendo a iniciar sesión...");
+        setTimeout(() => {
+          useAuthStore.getState().logout();
+          navigate("/login");
+        }, 2000);
+      } else {
+        setError(errorMsg);
+      }
     }
   };
 

@@ -4,21 +4,39 @@ export const orderService = {
   // Crear nueva orden
   async crearOrden(ordenData) {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${API_URL}/api/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(ordenData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || error.message || "Error al crear la orden");
+    
+    if (!token) {
+      throw new Error("No estás autenticado. Por favor inicia sesión nuevamente.");
     }
 
-    return response.json();
+    try {
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(ordenData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Error desconocido" }));
+        
+        // Si es error de autenticación, limpiar token y notificar
+        if (response.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          throw new Error("Tu sesión ha expirado. Por favor inicia sesión nuevamente.");
+        }
+        
+        throw new Error(error.error || error.message || "Error al crear la orden");
+      }
+
+      return response.json();
+    } catch (error) {
+      // Re-lanzar errores de red u otros
+      throw error;
+    }
   },
 
   // Obtener mis órdenes
