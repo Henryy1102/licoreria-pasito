@@ -7,12 +7,12 @@ import { useNotificationStore } from "../store/notificationStore";
 export default function Navbar() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { items } = useCartStore();
+  const { items, carrito } = useCartStore();
   const { notificaciones, noLeidas, obtenerNotificaciones, marcarComoLeida } = useNotificationStore();
   const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
   const [menuMovilAbierto, setMenuMovilAbierto] = useState(false);
   
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = carrito.reduce((sum, item) => sum + item.cantidad, 0);
 
   // Cargar notificaciones al inicio y cada minuto
   useEffect(() => {
