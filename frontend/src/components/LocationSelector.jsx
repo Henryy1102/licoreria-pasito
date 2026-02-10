@@ -70,7 +70,7 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
       return;
     }
 
-    // Debounce: 300ms
+    // Debounce: 200ms
     setBuscando(true);
     timeoutRef.current = setTimeout(async () => {
       const searchTerm = valor.trim();
@@ -87,10 +87,10 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
       try {
         abortControllerRef.current = new AbortController();
 
-        // Coordenadas de Riobamba, Ecuador (limitado a 10km alrededor)
-        // viewbox: oeste,sur,este,norte
+        // Coordenadas de Riobamba, Ecuador - búsqueda más amplia
+        // viewbox: oeste,sur,este,norte (ampliado a 15km alrededor)
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&limit=10&viewbox=-78.85,-1.85,-78.4,-1.5&bounded=1&countrycodes=ec&addressdetails=0`,
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)} Riobamba&format=json&limit=15&countrycodes=ec&addressdetails=0&extratags=1`,
           { 
             signal: abortControllerRef.current.signal,
             headers: { 'Accept-Language': 'es' }
@@ -124,7 +124,7 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
         setSugerencias([]);
         setBuscando(false);
       }
-    }, 300); // Debounce de 300ms
+    }, 200); // Debounce de 200ms
   };
 
   // Seleccionar una sugerencia
