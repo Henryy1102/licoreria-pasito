@@ -151,12 +151,14 @@ export default function Checkout() {
         }
       }
 
-      // Validar ubicación
-      if (!ubicacion || (!ubicacion.direccion && !ubicacion.link) || 
-          (ubicacion.direccion && ubicacion.direccion.trim() === "") ||
-          (ubicacion.link && ubicacion.link.trim() === "")) {
-        setError("Por favor ingresa tu ubicación de entrega");
-        return;
+      // Validar ubicación solo si es entrega a domicilio
+      if (ubicacion.tipoEntrega !== "retirar") {
+        if (!ubicacion || (!ubicacion.direccion && !ubicacion.link) || 
+            (ubicacion.direccion && ubicacion.direccion.trim() === "") ||
+            (ubicacion.link && ubicacion.link.trim() === "")) {
+          setError("Por favor ingresa tu ubicación de entrega");
+          return;
+        }
       }
 
       // Validar comprobante si es transferencia
