@@ -308,9 +308,6 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
                 <p className="font-semibold text-gray-700 mb-2">🕐 Horario:</p>
                 <p className="text-gray-600">Lun - Dom: 14:00 PM - 02:00 AM</p>
               </div>
-              <div className="bg-green-50 border border-green-300 rounded p-2">
-                <p className="text-sm font-semibold text-green-800">✓ Atención 24 horas</p>
-              </div>
             </div>
           </div>
         </div>
