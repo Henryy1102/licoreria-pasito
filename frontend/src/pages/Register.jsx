@@ -7,7 +7,6 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [fecha_nacimiento, setFechaNacimiento] = useState("");
-  const [direccion, setDireccion] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [terminosAceptados, setTerminosAceptados] = useState(false);
@@ -68,12 +67,6 @@ export default function Register() {
       }
     }
 
-    if (!direccion.trim()) {
-      errors.direccion = "La dirección es requerida";
-    } else if (direccion.trim().length < 5) {
-      errors.direccion = "La dirección debe tener al menos 5 caracteres";
-    }
-
     if (!password) {
       errors.password = "La contraseña es requerida";
     } else if (password.length < 8) {
@@ -109,8 +102,7 @@ export default function Register() {
         nombre, 
         email, 
         telefono, 
-        fecha_nacimiento, 
-        direccion,
+        fecha_nacimiento,
         password 
       });
       navigate("/catalog");
@@ -205,24 +197,6 @@ export default function Register() {
             />
             {validationErrors.fecha_nacimiento && (
               <p className="text-red-400 text-xs mt-1">{validationErrors.fecha_nacimiento}</p>
-            )}
-          </div>
-
-          <div className="mb-3 sm:mb-4">
-            <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
-              Dirección *
-            </label>
-            <input
-              type="text"
-              className={`input ${validationErrors.direccion ? 'border-red-500' : ''}`}
-              placeholder="Av. Principal 123, Apt 4"
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
-              disabled={loading}
-              required
-            />
-            {validationErrors.direccion && (
-              <p className="text-red-400 text-xs mt-1">{validationErrors.direccion}</p>
             )}
           </div>
 
