@@ -14,6 +14,15 @@ import {
   Legend,
 } from "chart.js";
 import { Line, Bar, Doughnut } from "react-chartjs-2";
+import {
+  generarPdfResumen,
+  generarPdfClientes,
+  generarPdfProductos,
+  generarPdfCompleto,
+  generarPdfInventario,
+  generarPdfClientesFrecuentes,
+  generarPdfTendencias,
+} from "../utils/pdfReports";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -150,6 +159,54 @@ export default function AdminReportes() {
   const handleLimpiar = () => {
     setFechaInicio("");
     setFechaFin("");
+  };
+
+  const handleDescargarPdfResumen = () => {
+    if (!reportes) return;
+    generarPdfResumen({
+      ...reportes,
+      periodo: {
+        desde: fechaInicio || 'Inicio',
+        hasta: fechaFin || 'Hoy'
+      }
+    });
+  };
+
+  const handleDescargarPdfClientes = () => {
+    if (!clientesFrecuentes) return;
+    generarPdfClientesFrecuentes(clientesFrecuentes);
+  };
+
+  const handleDescargarPdfProductos = () => {
+    if (!reportes) return;
+    generarPdfProductos({
+      topProductos: reportes.topProductos || [],
+      periodo: {
+        desde: fechaInicio || 'Inicio',
+        hasta: fechaFin || 'Hoy'
+      }
+    });
+  };
+
+  const handleDescargarPdfInventario = () => {
+    if (!inventario) return;
+    generarPdfInventario(inventario);
+  };
+
+  const handleDescargarPdfTendencias = () => {
+    if (!tendencias) return;
+    generarPdfTendencias(reportes, tendencias);
+  };
+
+  const handleDescargarPdfCompleto = () => {
+    if (!reportes) return;
+    generarPdfCompleto({
+      ...reportes,
+      periodo: {
+        desde: fechaInicio || 'Inicio',
+        hasta: fechaFin || 'Hoy'
+      }
+    });
   };
 
   if (cargando) {
@@ -335,6 +392,22 @@ export default function AdminReportes() {
         {/* CONTENIDO POR PESTAÑA */}
         {pestaña === "resumen" && (
           <div className="space-y-4 sm:space-y-6">
+            {/* Botones de descarga */}
+            <div className="flex flex-wrap gap-3 justify-end">
+              <button
+                onClick={handleDescargarPdfResumen}
+                className="bg-primary text-fondo px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition flex items-center gap-2 text-sm"
+              >
+                📄 Descargar Resumen PDF
+              </button>
+              <button
+                onClick={handleDescargarPdfCompleto}
+                className="bg-secondary border border-primary text-primary px-4 py-2 rounded-lg font-semibold hover:bg-secondary/80 transition flex items-center gap-2 text-sm"
+              >
+                📋 Descargar Reporte Completo PDF
+              </button>
+            </div>
+
             {/* Tarjetas de resumen */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="bg-fondo/60 p-4 sm:p-6 rounded-lg shadow-md border border-primary/20">
@@ -416,9 +489,17 @@ export default function AdminReportes() {
 
         {pestaña === "clientes" && (
           <div className="bg-secondary p-4 sm:p-6 rounded-lg shadow-md border border-primary/20">
-            <h3 className="text-lg sm:text-xl font-bold text-primary mb-3 sm:mb-4">
-              Top 10 Clientes Frecuentes
-            </h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-primary">
+                Top 10 Clientes Frecuentes
+              </h3>
+              <button
+                onClick={handleDescargarPdfClientes}
+                className="bg-primary text-fondo px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition flex items-center gap-2 text-sm"
+              >
+                📄 Descargar PDF
+              </button>
+            </div>
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <div className="inline-block min-w-full align-middle">
                 <table className="w-full">
@@ -464,9 +545,17 @@ export default function AdminReportes() {
         {pestaña === "productos" && (
           <div className="space-y-4 sm:space-y-6">
             <div className="bg-secondary p-4 sm:p-6 rounded-lg shadow-md border border-primary/20">
-              <h3 className="text-lg sm:text-xl font-bold text-primary mb-3 sm:mb-4">
-                Productos Más Vendidos
-              </h3>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-primary">
+                  Productos Más Vendidos
+                </h3>
+                <button
+                  onClick={handleDescargarPdfProductos}
+                  className="bg-primary text-fondo px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition flex items-center gap-2 text-sm"
+                >
+                  📄 Descargar PDF
+                </button>
+              </div>
               <div className="overflow-x-auto -mx-4 sm:mx-0">
                 <div className="inline-block min-w-full align-middle">
                   <table className="w-full">
@@ -510,6 +599,16 @@ export default function AdminReportes() {
 
         {pestaña === "inventario" && (
           <div className="space-y-4 sm:space-y-6">
+            {/* Botón de descarga */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleDescargarPdfInventario}
+                className="bg-primary text-fondo px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition flex items-center gap-2 text-sm"
+              >
+                📄 Descargar Inventario PDF
+              </button>
+            </div>
+
             {/* Resumen de inventario */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <div className="bg-secondary p-4 sm:p-6 rounded-lg shadow-md border border-primary/20">
@@ -616,6 +715,16 @@ export default function AdminReportes() {
 
         {pestaña === "tendencias" && (
           <div className="space-y-4 sm:space-y-6">
+            {/* Botón de descarga */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleDescargarPdfTendencias}
+                className="bg-primary text-fondo px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition flex items-center gap-2 text-sm"
+              >
+                📄 Descargar Tendencias PDF
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div className="bg-secondary p-4 sm:p-6 rounded-lg shadow-md border border-primary/20">
                 <h3 className="text-lg sm:text-xl font-bold text-primary mb-3 sm:mb-4">
