@@ -88,32 +88,6 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
     
     setUbicacionConfirmada(true);
   };
-    setError("");
-    
-    if (!linkGoogle.trim()) {
-      setError("Por favor pega un link de Google Maps válido");
-      return;
-    }
-
-    const esLinkValido = 
-      linkGoogle.includes("google.com/maps") || 
-      linkGoogle.includes("maps.google.com") ||
-      linkGoogle.includes("goo.gl") || 
-      linkGoogle.includes("maps.app.goo.gl");
-    
-    if (!esLinkValido) {
-      setError("El link debe ser de Google Maps");
-      return;
-    }
-
-    onLocationSelect({
-      direccion: "Ubicación desde Google Maps",
-      link: linkGoogle.trim(),
-      modoUbicacion: "google-link",
-    });
-    
-    setUbicacionConfirmada(true);
-  };
 
 
   return (
