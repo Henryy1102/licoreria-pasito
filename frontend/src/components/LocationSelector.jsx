@@ -43,7 +43,7 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
     }
   };
 
-  // Buscar direcciones - Ultra optimizado
+  // Buscar direcciones con Nominatim mejorado
   const handleBuscar = (valor) => {
     setInput(valor);
     setError("");
@@ -70,7 +70,7 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
       return;
     }
 
-    // Debounce: 200ms
+    // Debounce: 150ms
     setBuscando(true);
     timeoutRef.current = setTimeout(async () => {
       const searchTerm = valor.trim();
@@ -87,24 +87,49 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
       try {
         abortControllerRef.current = new AbortController();
 
-        // Coordenadas de Riobamba, Ecuador - búsqueda más amplia
-        // viewbox: oeste,sur,este,norte (ampliado a 15km alrededor)
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)} Riobamba&format=json&limit=15&countrycodes=ec&addressdetails=0&extratags=1`,
-          { 
+        // Búsqueda en Riobamba, Ecuador con mejor cobertura
+        const queries = [
+          // Primero intenta con el término + Riobamba
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)},Riobamba,Ecuador&format=json&limit=20&countrycodes=ec`,
+          // Si no, intenta solo el término
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&limit=20&countrycodes=ec&viewbox=-78.9,-1.9,-78.3,-1.4&bounded=1`
+        ];
+
+        let data = [];
+
+        // Intenta la primera búsqueda
+        try {
+          const response1 = await fetch(queries[0], {
             signal: abortControllerRef.current.signal,
             headers: { 'Accept-Language': 'es' }
-          }
-        );
+          });
 
-        if (!response.ok) {
-          throw new Error("Error en la búsqueda");
+          if (response1.ok) {
+            data = await response1.json();
+            console.log("🔍 Búsqueda 1 - Resultados:", data.length);
+          }
+        } catch (e) {
+          console.log("Búsqueda 1 falló, intentando búsqueda 2...");
         }
 
-        const data = await response.json();
-        console.log("🔍 Búsqueda en Riobamba:", data.length, "resultados");
+        // Si no hay resultados, intenta la segunda búsqueda
+        if (data.length === 0) {
+          try {
+            const response2 = await fetch(queries[1], {
+              signal: abortControllerRef.current.signal,
+              headers: { 'Accept-Language': 'es' }
+            });
 
-        // Guardar en caché
+            if (response2.ok) {
+              data = await response2.json();
+              console.log("🔍 Búsqueda 2 - Resultados:", data.length);
+            }
+          } catch (e) {
+            console.log("Búsqueda 2 falló");
+          }
+        }
+
+        // Guardar en caché y mostrar resultados
         if (data.length > 0) {
           cacheRef.current[searchTerm] = data;
           setSugerencias(data);
@@ -124,7 +149,7 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
         setSugerencias([]);
         setBuscando(false);
       }
-    }, 200); // Debounce de 200ms
+    }, 150); // Debounce de 150ms
   };
 
   // Seleccionar una sugerencia
