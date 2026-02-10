@@ -12,8 +12,9 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
   
   const timeoutRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const cacheRef = useRef({}); // Caché de búsquedas
 
-  // Buscar direcciones con debounce
+  // Buscar direcciones - Ultra optimizado
   const handleBuscar = (valor) => {
     setInput(valor);
     setError("");
@@ -33,23 +34,37 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
       return;
     }
 
-    // Solo buscar si tiene 3+ caracteres
-    if (valor.trim().length < 3) {
+    // Solo buscar si tiene 2+ caracteres
+    if (valor.trim().length < 2) {
       setSugerencias([]);
       setMostrarSugerencias(false);
       return;
     }
 
-    // Debounce: esperar 300ms después de que el usuario deje de escribir
+    // Debounce ultra rápido: 150ms
     setBuscando(true);
     timeoutRef.current = setTimeout(async () => {
+      const searchTerm = valor.trim();
+
+      // Verificar caché
+      if (cacheRef.current[searchTerm]) {
+        console.log("📦 Resultados del caché");
+        setSugerencias(cacheRef.current[searchTerm]);
+        setMostrarSugerencias(true);
+        setBuscando(false);
+        return;
+      }
+
       try {
         abortControllerRef.current = new AbortController();
 
-        // API de Nominatim - Totalmente gratis, sin API key
+        // API de Nominatim - Optimizada al máximo
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(valor)}&format=json&limit=7&countrycodes=ec`,
-          { signal: abortControllerRef.current.signal }
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&limit=10&countrycodes=ec&addressdetails=0`,
+          { 
+            signal: abortControllerRef.current.signal,
+            headers: { 'Accept-Language': 'es' }
+          }
         );
 
         if (!response.ok) {
@@ -57,9 +72,11 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
         }
 
         const data = await response.json();
-        console.log("🔍 Resultados rápidos de Nominatim:", data.length);
+        console.log("🔍 Búsqueda rápida:", data.length, "resultados");
 
+        // Guardar en caché
         if (data.length > 0) {
+          cacheRef.current[searchTerm] = data;
           setSugerencias(data);
           setMostrarSugerencias(true);
         } else {
@@ -72,12 +89,12 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
           console.log("Búsqueda cancelada");
           return;
         }
-        console.error("Error buscando direcciones:", err);
-        setError("No se encontraron resultados. Intenta con otro término.");
+        console.error("Error buscando:", err);
+        setError("No se encontraron resultados");
         setSugerencias([]);
         setBuscando(false);
       }
-    }, 300); // Debounce de 300ms
+    }, 150); // Debounce más rápido: 150ms en lugar de 300ms
   };
 
   // Seleccionar una sugerencia
@@ -167,12 +184,12 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
               </div>
             )}
 
-            {/* Sin resultados */}
-            {!buscando && input.trim().length >= 3 && sugerencias.length === 0 && mostrarSugerencias === false && !error && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg p-3 text-center">
-                <p className="text-sm text-gray-600">No se encontraron resultados</p>
-              </div>
-            )}
+          {/* Sin resultados */}
+          {!buscando && input.trim().length >= 2 && sugerencias.length === 0 && mostrarSugerencias === false && !error && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg p-3 text-center">
+              <p className="text-sm text-gray-600">No se encontraron resultados</p>
+            </div>
+          )}
           </div>
 
           {/* Dirección seleccionada */}
