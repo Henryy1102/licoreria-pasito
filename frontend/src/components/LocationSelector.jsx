@@ -1,34 +1,103 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function LocationSelector({ onLocationSelect, initialLocation }) {
-  const [inputMode, setInputMode] = useState("simple"); // "simple" o "google"
   const [direccion, setDireccion] = useState(initialLocation?.direccion || "");
-  const [referencia, setReferencia] = useState(initialLocation?.referencia || "");
-  const [linkGoogle, setLinkGoogle] = useState(initialLocation?.link || "");
+  const [sugerencias, setSugerencias] = useState([]);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   const [error, setError] = useState("");
+  const [ubicacionConfirmada, setUbicacionConfirmada] = useState(false);
+  const [latLng, setLatLng] = useState(initialLocation?.latitud && initialLocation?.longitud ? { lat: initialLocation.latitud, lng: initialLocation.longitud } : null);
+  const [modoAlternativo, setModoAlternativo] = useState(false);
+  const [linkGoogle, setLinkGoogle] = useState(initialLocation?.link || "");
+  const inputRef = useRef(null);
+  const autocompleteServiceRef = useRef(null);
+  const placesServiceRef = useRef(null);
 
-  const handleSimpleSubmit = () => {
-    setError("");
+  // Inicializar Google Places Autocomplete
+  useEffect(() => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+      placesServiceRef.current = new window.google.maps.places.PlacesService(document.createElement('div'));
+    }
+  }, []);
+
+  // Manejar búsqueda con autocompletado
+  const handleInputChange = async (value) => {
+    setDireccion(value);
+    setUbicacionConfirmada(false);
+    setSugerencias([]);
     
-    if (!direccion.trim()) {
-      setError("Por favor ingresa tu dirección de entrega");
+    if (!value.trim()) {
+      setMostrarSugerencias(false);
       return;
     }
-    
-    if (direccion.trim().length < 10) {
-      setError("La dirección debe tener al menos 10 caracteres");
+
+    if (!autocompleteServiceRef.current) {
+      setError("Google Places no está disponible");
       return;
     }
 
-    onLocationSelect({
-      direccion: direccion.trim(),
-      referencia: referencia.trim(),
-      link: null,
-      modoUbicacion: "simple",
-    });
+    try {
+      const request = {
+        input: value,
+        // Restringir a Ecuador (si aplica) o dejar genérico
+        componentRestrictions: { country: 'ec' }, // Cambiar según país
+      };
+
+      const predictions = await autocompleteServiceRef.current.getPlacePredictions(request);
+      setSugerencias(predictions.predictions || []);
+      setMostrarSugerencias(true);
+      setError("");
+    } catch (err) {
+      console.error("Error en autocomplete:", err);
+      setSugerencias([]);
+    }
   };
 
-  const handleGoogleSubmit = () => {
+  // Seleccionar una sugerencia y obtener detalles
+  const handleSelectSugerencia = async (placeId, descripcion) => {
+    setDireccion(descripcion);
+    setMostrarSugerencias(false);
+    
+    // Obtener detalles del lugar
+    const request = {
+      placeId: placeId,
+      fields: ['geometry', 'formatted_address', 'name'],
+    };
+
+    try {
+      const place = await new Promise((resolve, reject) => {
+        placesServiceRef.current.getDetails(request, (place, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            resolve(place);
+          } else {
+            reject(new Error('No se pudo obtener los detalles del lugar'));
+          }
+        });
+      });
+
+      const latitud = place.geometry.location.lat();
+      const longitud = place.geometry.location.lng();
+      setLatLng({ lat: latitud, lng: longitud });
+      setError("");
+
+      // Enviar al componente padre
+      onLocationSelect({
+        direccion: place.formatted_address || descripcion,
+        latitud,
+        longitud,
+        modoUbicacion: "autocomplete",
+      });
+      
+      setUbicacionConfirmada(true);
+    } catch (err) {
+      console.error("Error al obtener detalles del lugar:", err);
+      setError("No se pudo confirmar la ubicación. Intenta de nuevo.");
+    }
+  };
+
+  // Modo alternativo: Link de Google Maps
+  const handleGoogleMapsLink = () => {
     setError("");
     
     if (!linkGoogle.trim()) {
@@ -48,190 +117,134 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
     }
 
     onLocationSelect({
-      direccion: "Ubicación compartida desde Google Maps",
-      referencia: "",
+      direccion: "Ubicación desde Google Maps",
       link: linkGoogle.trim(),
-      modoUbicacion: "google",
+      modoUbicacion: "google-link",
     });
+    
+    setUbicacionConfirmada(true);
   };
+
 
   return (
     <div className="space-y-4">
-      {/* Selector de modo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button
-          type="button"
-          onClick={() => {
-            setInputMode("simple");
-            setError("");
-          }}
-          className={`p-4 rounded-lg border-2 transition-all ${
-            inputMode === "simple"
-              ? "border-green-500 bg-green-500/10"
-              : "border-slate-700 hover:border-green-500/50 bg-fondo"
-          }`}
-        >
-          <div className="text-center">
-            <div className="text-3xl mb-2">📝</div>
-            <h3 className="font-bold text-primary mb-1">Ingreso Manual</h3>
-            <p className="text-xs text-subtext">Rápido y simple</p>
-          </div>
-        </button>
+      {/* Modo principal: Google Places Autocomplete */}
+      <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-6">
+        <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2 text-lg">
+          🔍 Google Maps Autocomplete <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">Recomendada</span>
+        </h3>
+        <p className="text-sm text-blue-800 mb-4">
+          Empieza a escribir tu dirección y Google sugiere opciones. ¡Muy rápido y preciso!
+        </p>
 
-        <button
-          type="button"
-          onClick={() => {
-            setInputMode("google");
-            setError("");
-          }}
-          className={`p-4 rounded-lg border-2 transition-all ${
-            inputMode === "google"
-              ? "border-blue-500 bg-blue-500/10"
-              : "border-slate-700 hover:border-blue-500/50 bg-fondo"
-          }`}
-        >
-          <div className="text-center">
-            <div className="text-3xl mb-2">🗺️</div>
-            <h3 className="font-bold text-primary mb-1">Google Maps</h3>
-            <p className="text-xs text-subtext">Más preciso</p>
+        <div className="space-y-3">
+          {/* Campo de entrada con autocomplete */}
+          <div className="relative">
+            <input
+              ref={inputRef}
+              type="text"
+              value={direccion}
+              onChange={(e) => handleInputChange(e.target.value)}
+              placeholder="Ej: Calle Principal 123, Riobamba..."
+              className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-700 font-semibold"
+            />
+            
+            {/* Sugerencias de Google */}
+            {mostrarSugerencias && sugerencias.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-blue-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                {sugerencias.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleSelectSugerencia(suggestion.place_id, suggestion.description)}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-blue-200 last:border-b-0 transition"
+                  >
+                    <p className="text-gray-800 font-semibold text-sm">{suggestion.main_text}</p>
+                    <p className="text-xs text-gray-600">{suggestion.secondary_text}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </button>
+
+          {/* Indicador de posición */}
+          {latLng && (
+            <div className="p-3 bg-green-50 border border-green-300 rounded-lg flex items-start gap-3">
+              <span className="text-xl">📍</span>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-green-900">Ubicación confirmada</p>
+                <p className="text-xs text-green-800 mt-1">{direccion}</p>
+                <p className="text-xs text-green-700 mt-1">Coordenadas: {latLng.lat.toFixed(4)}, {latLng.lng.toFixed(4)}</p>
+              </div>
+              <span className="text-xl">✅</span>
+            </div>
+          )}
+        </div>
+
+        {/* Ventajas */}
+        <div className="mt-4 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+          <p className="text-sm font-semibold text-blue-900 mb-2">✨ Ventajas:</p>
+          <ul className="text-xs text-blue-800 space-y-1">
+            <li>✓ 1 solo campo (muy rápido)</li>
+            <li>✓ Google sugiere automáticamente</li>
+            <li>✓ Dirección validada y precisa</li>
+            <li>✓ Captura coordenadas exactas</li>
+            <li>✓ Menos errores de tipeo</li>
+          </ul>
+        </div>
       </div>
 
-      {/* Modo Simple */}
-      {inputMode === "simple" && (
-        <div className="bg-green-50 border border-green-300 rounded-lg p-6">
-          <h3 className="font-bold text-green-900 mb-4 flex items-center gap-2">
-            📝 Ingresa tu Dirección de Entrega
+      {/* Modo alternativo: Pegar link de Google Maps */}
+      <button
+        type="button"
+        onClick={() => setModoAlternativo(!modoAlternativo)}
+        className="w-full text-sm text-blue-600 hover:text-blue-800 font-semibold py-2 flex items-center justify-center gap-2 transition"
+      >
+        {modoAlternativo ? "✕ Cerrar" : "+ Usar link de Google Maps"}
+      </button>
+
+      {modoAlternativo && (
+        <div className="bg-slate-50 border border-slate-300 rounded-lg p-6">
+          <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
+            🗺️ Pegar Link de Google Maps
           </h3>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-green-900 mb-2">
-                Dirección completa *
-              </label>
-              <textarea
-                value={direccion}
-                onChange={(e) => setDireccion(e.target.value)}
-                placeholder="Ej: Calle Principal #123, Apto 4B, Sector Centro, Riobamba"
-                className="w-full px-4 py-3 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 bg-white text-gray-700"
-                rows="3"
-              />
-              <p className="text-xs text-green-700 mt-1">
-                Incluye: Calle, número, apartamento (si aplica), y referencia del sector
-              </p>
-            </div>
+          <p className="text-sm text-slate-700 mb-4">
+            Si prefieres, puedes pegar directamente un link de Google Maps.
+          </p>
 
-            <div>
-              <label className="block text-sm font-semibold text-green-900 mb-2">
-                Referencia adicional (ej: "Casa color azul", "Junto al supermercado")
-              </label>
-              <input
-                type="text"
-                value={referencia}
-                onChange={(e) => setReferencia(e.target.value)}
-                placeholder="Marca de referencia para el repartidor"
-                className="w-full px-4 py-3 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 bg-white text-gray-700"
-              />
-            </div>
-
-            {error && inputMode === "simple" && (
-              <div className="p-3 bg-red-100 border border-red-400 rounded text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleSimpleSubmit}
-              className="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-semibold"
-            >
-              ✅ Confirmar Dirección
-            </button>
-          </div>
-
-          <div className="mt-4 p-3 bg-green-100 border border-green-400 rounded text-xs text-green-800">
-            <p className="font-semibold mb-1">💡 Ventaja:</p>
-            <p>✓ Muy rápido de llenar</p>
-            <p>✓ Sin necesidad de aplicaciones externas</p>
-          </div>
-        </div>
-      )}
-
-      {/* Modo Google Maps */}
-      {inputMode === "google" && (
-        <div className="bg-blue-50 border border-blue-300 rounded-lg p-6">
-          <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
-            🗺️ Ubicación desde Google Maps
-          </h3>
-
-          <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 mb-4">
-            <p className="text-sm font-semibold text-blue-900 mb-2">📱 Cómo obtener tu ubicación:</p>
-            <ol className="text-xs text-blue-800 space-y-2 ml-4 list-decimal">
-              <li>Abre <strong>Google Maps</strong></li>
-              <li>Busca o navega a tu ubicación</li>
-              <li>Mantén presionado en el punto exacto</li>
-              <li>Haz clic en <strong>"Compartir"</strong></li>
-              <li>Copia el link</li>
-              <li>Pégalo aquí abajo</li>
-            </ol>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-blue-900 mb-2">
-                Link de Google Maps *
-              </label>
-              <textarea
-                value={linkGoogle}
-                onChange={(e) => setLinkGoogle(e.target.value)}
-                placeholder="Ej: https://maps.google.com/?q=-0.9219,-78.4678 o https://goo.gl/maps/abc123"
-                className="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 bg-white text-gray-700"
-                rows="3"
-              />
-            </div>
-
-            {error && inputMode === "google" && (
-              <div className="p-3 bg-red-100 border border-red-400 rounded text-sm text-red-700">
-                {error}
-              </div>
-            )}
+          <div className="space-y-3">
+            <textarea
+              value={linkGoogle}
+              onChange={(e) => setLinkGoogle(e.target.value)}
+              placeholder="Ej: https://maps.google.com/?q=-0.9219,-78.4678"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:border-slate-500 bg-white text-gray-700"
+              rows="2"
+            />
 
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => window.open("https://maps.google.com", "_blank")}
-                className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
+                className="flex-1 bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition font-semibold text-sm"
               >
                 🗺️ Abrir Google Maps
               </button>
               <button
                 type="button"
-                onClick={handleGoogleSubmit}
-                className="flex-1 bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition font-semibold"
+                onClick={handleGoogleMapsLink}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
               >
                 ✅ Confirmar Link
               </button>
             </div>
           </div>
-
-          <div className="mt-4 p-3 bg-blue-100 border border-blue-400 rounded text-xs text-blue-800">
-            <p className="font-semibold mb-1">💡 Ventaja:</p>
-            <p>✓ Ubicación más precisa</p>
-            <p>✓ El repartidor ve exactamente dónde es</p>
-          </div>
         </div>
       )}
 
-      {/* Confirmación visual */}
-      {(direccion || linkGoogle) && !error && (
-        <div className="p-4 bg-green-50 border border-green-400 rounded-lg">
-          <p className="text-green-900 font-semibold mb-2">✅ Ubicación confirmada</p>
-          <p className="text-sm text-green-800">
-            {inputMode === "simple" 
-              ? `${direccion}${referencia ? ` (${referencia})` : ""}`
-              : "Link de Google Maps proporcionado"}
-          </p>
+      {/* Errores */}
+      {error && (
+        <div className="p-3 bg-red-100 border border-red-400 rounded-lg text-sm text-red-700 font-semibold">
+          ⚠️ {error}
         </div>
       )}
     </div>
