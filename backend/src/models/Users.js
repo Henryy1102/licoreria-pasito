@@ -60,15 +60,14 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "cliente"],
       default: "cliente",
     },
-    puntos: {
-      type: Number,
-      default: 0,
-      min: 0,
+    // Campos para recuperación de contraseña
+    resetToken: {
+      type: String,
+      default: null,
     },
-    puntosAcumulados: {
-      type: Number,
-      default: 0,
-      min: 0,
+    resetTokenExpiry: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }

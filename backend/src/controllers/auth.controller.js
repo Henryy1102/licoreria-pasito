@@ -8,6 +8,17 @@ import Invoice from "../models/Invoice.js";
 import Product from "../models/Product.js";
 import Client from "../models/Client.js";
 import { generarXMLFactura } from "../utils/xmlGenerator.js";
+import crypto from "crypto";
+import nodemailer from "nodemailer";
+
+// Configurar transporte de email
+const transporter = nodemailer.createTransport({
+  service: process.env.EMAIL_SERVICE || "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
 
 export const register = async (req, res) => {
   try {
@@ -277,3 +288,128 @@ export const login = async (req, res) => {
     res.status(500).json({ message: "Error al iniciar sesión" });
   }
 };
+
+// Solicitar recuperación de contraseña
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "El email es requerido" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    // Generar token de reset
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
+    
+    // Guardar token con expiración de 1 hora
+    user.resetToken = resetTokenHash;
+    user.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+    await user.save();
+
+    // Crear enlace de reset
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    
+    // Enviar email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Recuperar contraseña - Licorería Al Pasito",
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h2 style="color: #8B4513;">Recuperar Contraseña</h2>
+          <p>Hola ${user.nombre},</p>
+          <p>Recibimos una solicitud para recuperar tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #8B4513; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+            Recuperar Contraseña
+          </a>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p style="word-break: break-all; background-color: #f5f5f5; padding: 10px; border-radius: 3px;">${resetUrl}</p>
+          <p><strong>Este enlace expira en 1 hora.</strong></p>
+          <p>Si no solicitaste este cambio, ignora este email.</p>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+          <p style="font-size: 12px; color: #888;">© 2026 Licorería Al Pasito - Todos los derechos reservados</p>
+        </div>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      res.json({ message: "Se ha enviado un enlace de recuperación a tu correo electrónico" });
+    } catch (emailError) {
+      console.error("Error al enviar email:", emailError);
+      // Limpiar token si falla el envío
+      user.resetToken = null;
+      user.resetTokenExpiry = null;
+      await user.save();
+      return res.status(500).json({ message: "Error al enviar el email de recuperación" });
+    }
+  } catch (error) {
+    console.error("Error en forgotPassword:", error);
+    res.status(500).json({ message: "Error al procesar la solicitud" });
+  }
+};
+
+// Resetear contraseña
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "Todos los campos son requeridos" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Las contraseñas no coinciden" });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "La contraseña debe tener al menos 6 caracteres" });
+    }
+
+    // Hash del token
+    const resetTokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Buscar usuario con token válido
+    const user = await User.findOne({
+      resetToken: resetTokenHash,
+      resetTokenExpiry: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Token inválido o expirado" });
+    }
+
+    // Hash de la nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(newPassword, salt);
+
+    // Actualizar contraseña
+    user.password = hash;
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    // Registrar en auditoría
+    await createAuditLog({
+      usuario: user._id,
+      usuarioNombre: user.nombre,
+      accion: "RESET_PASSWORD",
+      descripcion: `Usuario ${user.nombre} recuperó su contraseña`,
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.get('user-agent'),
+      entidad: { tipo: "usuario", id: user._id.toString(), nombre: user.nombre }
+    });
+
+    res.json({ message: "Contraseña actualizada correctamente" });
+  } catch (error) {
+    console.error("Error en resetPassword:", error);
+    res.status(500).json({ message: "Error al resetear la contraseña" });
+  }
+};
+
