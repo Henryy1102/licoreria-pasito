@@ -11,18 +11,20 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
   const [linkGoogle, setLinkGoogle] = useState(initialLocation?.link || "");
   const inputRef = useRef(null);
   const autocompleteServiceRef = useRef(null);
-  const placesServiceRef = useRef(null);
+  const geocoderRef = useRef(null);
 
-  // Inicializar Google Places Autocomplete
+  // Inicializar Google Places Autocomplete y Geocoder
   useEffect(() => {
-    if (window.google && window.google.maps && window.google.maps.places) {
-      autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-      placesServiceRef.current = new window.google.maps.places.PlacesService(document.createElement('div'));
+    if (window.google && window.google.maps) {
+      if (window.google.maps.places) {
+        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+      }
+      geocoderRef.current = new window.google.maps.Geocoder();
     }
   }, []);
 
   // Manejar búsqueda con autocompletado
-  const handleInputChange = async (value) => {
+  const handleInputChange = (value) => {
     setDireccion(value);
     setUbicacionConfirmada(false);
     setSugerencias([]);
@@ -33,67 +35,73 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
     }
 
     if (!autocompleteServiceRef.current) {
-      setError("Google Places no está disponible");
+      console.error("Google Places no está disponible");
+      setError("Google Places no está disponible. Recarga la página.");
       return;
     }
 
-    try {
-      const request = {
-        input: value,
-        // Restringir a Ecuador (si aplica) o dejar genérico
-        componentRestrictions: { country: 'ec' }, // Cambiar según país
-      };
+    const request = {
+      input: value,
+      componentRestrictions: { country: 'ec' },
+    };
 
-      const predictions = await autocompleteServiceRef.current.getPlacePredictions(request);
-      setSugerencias(predictions.predictions || []);
-      setMostrarSugerencias(true);
-      setError("");
-    } catch (err) {
-      console.error("Error en autocomplete:", err);
-      setSugerencias([]);
-    }
+    // Usar callback en lugar de await
+    autocompleteServiceRef.current.getPlacePredictions(request, (predictions, status) => {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+        console.log("📍 Sugerencias obtenidas:", predictions);
+        setSugerencias(predictions);
+        setMostrarSugerencias(true);
+        setError("");
+      } else if (status === window.google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+        console.log("Sin resultados");
+        setSugerencias([]);
+        setMostrarSugerencias(false);
+      } else {
+        console.error("Error en autocomplete:", status);
+        setSugerencias([]);
+        setMostrarSugerencias(false);
+      }
+    });
   };
 
   // Seleccionar una sugerencia y obtener detalles
-  const handleSelectSugerencia = async (placeId, descripcion) => {
+  const handleSelectSugerencia = (placeId, descripcion) => {
     setDireccion(descripcion);
     setMostrarSugerencias(false);
     
-    // Obtener detalles del lugar
-    const request = {
-      placeId: placeId,
-      fields: ['geometry', 'formatted_address', 'name'],
-    };
+    console.log("🔍 Obteniendo detalles del lugar:", placeId);
 
-    try {
-      const place = await new Promise((resolve, reject) => {
-        placesServiceRef.current.getDetails(request, (place, status) => {
-          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-            resolve(place);
-          } else {
-            reject(new Error('No se pudo obtener los detalles del lugar'));
-          }
-        });
-      });
-
-      const latitud = place.geometry.location.lat();
-      const longitud = place.geometry.location.lng();
-      setLatLng({ lat: latitud, lng: longitud });
-      setError("");
-
-      // Enviar al componente padre
-      onLocationSelect({
-        direccion: place.formatted_address || descripcion,
-        latitud,
-        longitud,
-        modoUbicacion: "autocomplete",
-      });
-      
-      setUbicacionConfirmada(true);
-    } catch (err) {
-      console.error("Error al obtener detalles del lugar:", err);
-      setError("No se pudo confirmar la ubicación. Intenta de nuevo.");
+    if (!geocoderRef.current) {
+      setError("Geocoder no está disponible");
+      return;
     }
+
+    // Usar Geocoder para obtener coordenadas
+    geocoderRef.current.geocode({ address: descripcion }, (results, status) => {
+      if (status === window.google.maps.GeocoderStatus.OK && results && results.length > 0) {
+        const location = results[0].geometry.location;
+        const latitud = location.lat();
+        const longitud = location.lng();
+        
+        console.log("✅ Coordenadas obtenidas:", { latitud, longitud });
+        
+        setLatLng({ lat: latitud, lng: longitud });
+        setError("");
+
+        // Enviar al componente padre
+        onLocationSelect({
+          direccion: results[0].formatted_address || descripcion,
+          latitud,
+          longitud,
+          modoUbicacion: "autocomplete",
+        });
+        
+        setUbicacionConfirmada(true);
+      } else {
+        console.error("Error al geocodificar:", status);
+        setError("No se pudo confirmar la ubicación. Intenta de nuevo.");
+      }
+    });
   };
 
   // Modo alternativo: Link de Google Maps
@@ -151,13 +159,16 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
             
             {/* Sugerencias de Google */}
             {mostrarSugerencias && sugerencias.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-blue-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-blue-300 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
                 {sugerencias.map((suggestion, index) => (
                   <button
-                    key={index}
+                    key={`${suggestion.place_id}-${index}`}
                     type="button"
-                    onClick={() => handleSelectSugerencia(suggestion.place_id, suggestion.description)}
-                    className="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-blue-200 last:border-b-0 transition"
+                    onClick={() => {
+                      console.log("🖱️ Seleccionado:", suggestion.description);
+                      handleSelectSugerencia(suggestion.place_id, suggestion.description);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-blue-100 border-b border-blue-200 last:border-b-0 transition cursor-pointer"
                   >
                     <p className="text-gray-800 font-semibold text-sm">{suggestion.main_text}</p>
                     <p className="text-xs text-gray-600">{suggestion.secondary_text}</p>
