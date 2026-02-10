@@ -78,11 +78,6 @@ export default function Login() {
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
             </div>
-            <div className="flex justify-end mt-1">
-              <Link to="/forgot-password" className="text-sm text-accent hover:underline">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
           </div>
 
           <div className="mb-4 sm:mb-6 flex items-center">
