@@ -113,6 +113,18 @@ export default function AdminOrdenes() {
     }
   };
 
+  const getUbicacionMapUrl = (ubicacion) => {
+    if (!ubicacion) return "";
+    if (ubicacion.link) return ubicacion.link;
+    if (typeof ubicacion.latitud === "number" && typeof ubicacion.longitud === "number") {
+      return `https://www.google.com/maps?q=${ubicacion.latitud},${ubicacion.longitud}`;
+    }
+    if (ubicacion.direccion) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(ubicacion.direccion)}`;
+    }
+    return "";
+  };
+
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("es-SV", {
       year: "numeric",
@@ -348,40 +360,63 @@ export default function AdminOrdenes() {
                 </div>
 
                 {/* Ubicación de Entrega */}
-                {ordenSeleccionada.ubicacion && ordenSeleccionada.ubicacion.link && (
+                {ordenSeleccionada.ubicacion && (
                   <div className="mb-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded">
                     <p className="text-accent font-semibold mb-3">📍 Ubicación de Entrega:</p>
-                    
-                    {/* Link para copiar */}
-                    <div className="mb-3 p-3 bg-white/10 border border-blue-400/30 rounded">
-                      <p className="text-blue-200 text-xs font-semibold mb-2">🔗 Link de Ubicación:</p>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={ordenSeleccionada.ubicacion.link}
-                          readOnly
-                          className="flex-1 px-3 py-2 border border-gray-400 rounded text-xs bg-gray-700 text-gray-200"
-                        />
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(ordenSeleccionada.ubicacion.link);
-                          }}
-                          className="px-3 py-2 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition font-semibold whitespace-nowrap"
-                        >
-                          📋 Copiar
-                        </button>
+
+                    {ordenSeleccionada.ubicacion.direccion && (
+                      <div className="mb-3 p-3 bg-white/10 border border-blue-400/30 rounded">
+                        <p className="text-blue-200 text-xs font-semibold mb-2">Dirección:</p>
+                        <p className="text-gray-200 text-sm break-words">
+                          {ordenSeleccionada.ubicacion.direccion}
+                        </p>
                       </div>
-                    </div>
+                    )}
+
+                    {typeof ordenSeleccionada.ubicacion.latitud === "number" &&
+                      typeof ordenSeleccionada.ubicacion.longitud === "number" && (
+                        <div className="mb-3 p-3 bg-white/10 border border-blue-400/30 rounded">
+                          <p className="text-blue-200 text-xs font-semibold mb-2">Coordenadas:</p>
+                          <p className="text-gray-200 text-sm">
+                            {ordenSeleccionada.ubicacion.latitud.toFixed(5)}, {ordenSeleccionada.ubicacion.longitud.toFixed(5)}
+                          </p>
+                        </div>
+                      )}
+
+                    {/* Link para copiar (legacy) */}
+                    {ordenSeleccionada.ubicacion.link && (
+                      <div className="mb-3 p-3 bg-white/10 border border-blue-400/30 rounded">
+                        <p className="text-blue-200 text-xs font-semibold mb-2">🔗 Link de Ubicación:</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={ordenSeleccionada.ubicacion.link}
+                            readOnly
+                            className="flex-1 px-3 py-2 border border-gray-400 rounded text-xs bg-gray-700 text-gray-200"
+                          />
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(ordenSeleccionada.ubicacion.link);
+                            }}
+                            className="px-3 py-2 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition font-semibold whitespace-nowrap"
+                          >
+                            📋 Copiar
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Botón para abrir en Google Maps */}
-                    <a
-                      href={ordenSeleccionada.ubicacion.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold text-sm"
-                    >
-                      🗺️ Ver Ubicación en Google Maps
-                    </a>
+                    {getUbicacionMapUrl(ordenSeleccionada.ubicacion) && (
+                      <a
+                        href={getUbicacionMapUrl(ordenSeleccionada.ubicacion)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold text-sm"
+                      >
+                        🗺️ Ver Ubicación en Google Maps
+                      </a>
+                    )}
                   </div>
                 )}
 
