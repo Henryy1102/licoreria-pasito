@@ -298,12 +298,19 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
             <p className="text-blue-800 mb-4">
               Tu pedido estará listo para retirar en nuestra tienda principal
             </p>
-            <div className="bg-white border-2 border-blue-300 rounded-lg p-4 text-left">
-              <p className="font-semibold text-gray-700 mb-2">📍 Dirección de la tienda:</p>
-              <p className="text-gray-600">Riobamba, Ecuador</p>
-              <p className="text-sm text-gray-500 mt-3 italic">
-                Te notificaremos cuando tu pedido esté listo
-              </p>
+            <div className="bg-white border-2 border-blue-300 rounded-lg p-4 text-left space-y-4">
+              <div>
+                <p className="font-semibold text-gray-700 mb-2">📍 Dirección:</p>
+                <p className="text-gray-600">Av. Principal Leonidas Plaza</p>
+                <p className="text-gray-600">Riobamba, Ecuador</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-700 mb-2">🕐 Horario:</p>
+                <p className="text-gray-600">Lun - Dom: 14:00 PM - 02:00 AM</p>
+              </div>
+              <div className="bg-green-50 border border-green-300 rounded p-2">
+                <p className="text-sm font-semibold text-green-800">✓ Atención 24 horas</p>
+              </div>
             </div>
           </div>
         </div>
