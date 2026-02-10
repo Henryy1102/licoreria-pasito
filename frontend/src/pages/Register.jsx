@@ -70,10 +70,8 @@ export default function Register() {
 
     if (!password) {
       errors.password = "La contraseña es requerida";
-    } else if (password.length < 8) {
-      errors.password = "La contraseña debe tener al menos 8 caracteres";
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      errors.password = "La contraseña debe contener mayúsculas, minúsculas y números";
+    } else if (password.length < 6) {
+      errors.password = "La contraseña debe tener al menos 6 caracteres";
     }
 
     if (password !== confirmPassword) {
@@ -209,7 +207,7 @@ export default function Register() {
           <div className="mb-3 sm:mb-4">
             <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
               Contraseña *
-              <span className="text-xs text-subtext">(Min. 8 caracteres: mayús, minús, número)</span>
+              <span className="text-xs text-subtext">(Mín. 6 caracteres)</span>
             </label>
             <div className="relative">
               <input
