@@ -43,7 +43,7 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
     }
   };
 
-  // Buscar direcciones con Nominatim mejorado
+  // Buscar direcciones - Búsqueda simple en Riobamba
   const handleBuscar = (valor) => {
     setInput(valor);
     setError("");
@@ -87,49 +87,25 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
       try {
         abortControllerRef.current = new AbortController();
 
-        // Búsqueda en Riobamba, Ecuador con mejor cobertura
-        const queries = [
-          // Primero intenta con el término + Riobamba
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)},Riobamba,Ecuador&format=json&limit=20&countrycodes=ec`,
-          // Si no, intenta solo el término
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&limit=20&countrycodes=ec&viewbox=-78.9,-1.9,-78.3,-1.4&bounded=1`
-        ];
-
-        let data = [];
-
-        // Intenta la primera búsqueda
-        try {
-          const response1 = await fetch(queries[0], {
+        // Búsqueda centrada en Riobamba, Ecuador
+        // Coordenadas de Riobamba: -1.6614, -78.6468
+        // Viewbox aproximado: 20km alrededor
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&limit=10&viewbox=-78.75,-1.75,-78.54,-1.57&bounded=1&countrycodes=ec`,
+          { 
             signal: abortControllerRef.current.signal,
             headers: { 'Accept-Language': 'es' }
-          });
-
-          if (response1.ok) {
-            data = await response1.json();
-            console.log("🔍 Búsqueda 1 - Resultados:", data.length);
           }
-        } catch (e) {
-          console.log("Búsqueda 1 falló, intentando búsqueda 2...");
+        );
+
+        if (!response.ok) {
+          throw new Error("Error en la búsqueda");
         }
 
-        // Si no hay resultados, intenta la segunda búsqueda
-        if (data.length === 0) {
-          try {
-            const response2 = await fetch(queries[1], {
-              signal: abortControllerRef.current.signal,
-              headers: { 'Accept-Language': 'es' }
-            });
+        const data = await response.json();
+        console.log("🔍 Búsqueda en Riobamba:", data.length, "resultados");
 
-            if (response2.ok) {
-              data = await response2.json();
-              console.log("🔍 Búsqueda 2 - Resultados:", data.length);
-            }
-          } catch (e) {
-            console.log("Búsqueda 2 falló");
-          }
-        }
-
-        // Guardar en caché y mostrar resultados
+        // Guardar en caché
         if (data.length > 0) {
           cacheRef.current[searchTerm] = data;
           setSugerencias(data);
