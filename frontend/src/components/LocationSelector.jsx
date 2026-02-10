@@ -43,7 +43,7 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
     }
   };
 
-  // Buscar direcciones - Búsqueda simple en Riobamba
+  // Buscar direcciones - Búsqueda flexible en Riobamba
   const handleBuscar = (valor) => {
     setInput(valor);
     setError("");
@@ -87,11 +87,9 @@ export default function LocationSelector({ onLocationSelect, initialLocation }) 
       try {
         abortControllerRef.current = new AbortController();
 
-        // Búsqueda centrada en Riobamba, Ecuador
-        // Coordenadas de Riobamba: -1.6614, -78.6468
-        // Viewbox aproximado: 20km alrededor
+        // Búsqueda amplia en Ecuador, prioriza Riobamba
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&limit=10&viewbox=-78.75,-1.75,-78.54,-1.57&bounded=1&countrycodes=ec`,
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)},Riobamba&format=json&limit=15&countrycodes=ec`,
           { 
             signal: abortControllerRef.current.signal,
             headers: { 'Accept-Language': 'es' }
