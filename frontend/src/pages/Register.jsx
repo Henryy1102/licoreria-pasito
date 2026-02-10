@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import authService from "../services/authService";
 
 export default function Register() {
   const [nombre, setNombre] = useState("");
@@ -123,7 +124,12 @@ export default function Register() {
         {error && (
           <div className="bg-red-900/50 border border-red-600 text-red-200 px-4 py-3 rounded-lg mb-4 flex items-center gap-2">
             <span className="text-lg">⚠️</span>
-            <span className="text-sm">{error}</span>
+            <div>
+              <p className="text-sm font-semibold">{error}</p>
+              {error.includes("correo") && (
+                <p className="text-xs mt-1">Usa un correo diferente o <Link to="/login" className="text-blue-300 hover:text-blue-200 underline">inicia sesión aquí</Link></p>
+              )}
+            </div>
           </div>
         )}
 
@@ -148,7 +154,7 @@ export default function Register() {
 
           <div className="mb-3 sm:mb-4">
             <label className="block text-primary font-bold mb-2 text-sm sm:text-base">
-              Email *
+              Email * <span className="text-xs text-subtext">(único y personal)</span>
             </label>
             <input
               type="email"
