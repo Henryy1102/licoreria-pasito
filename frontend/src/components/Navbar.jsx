@@ -80,12 +80,14 @@ export default function Navbar() {
                     📚 Catálogo
                   </NavLink>
                   <NavLink to="/cart" className={navLinkClassWhite}>
-                    🛒 Carrito
-                    {totalItems > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {totalItems}
-                      </span>
-                    )}
+                    <span className="relative inline-flex items-center">
+                      🛒 Carrito
+                      {totalItems > 0 && (
+                        <span className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-secondary">
+                          {totalItems > 99 ? "99+" : totalItems}
+                        </span>
+                      )}
+                    </span>
                   </NavLink>
                   <NavLink to="/mis-ordenes" className={navLinkClass}>📦 Mis Pedidos</NavLink>
                   <NavLink to="/account" className={navLinkClass}>👤 Mi cuenta</NavLink>
@@ -214,7 +216,14 @@ export default function Navbar() {
                     📚 Catálogo
                   </NavLink>
                   <NavLink to="/cart" className={navLinkClassWhite} onClick={() => setMenuMovilAbierto(false)}>
-                    🛒 Carrito {totalItems > 0 && `(${totalItems})`}
+                    <span className="relative">
+                      🛒 Carrito
+                      {totalItems > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {totalItems}
+                        </span>
+                      )}
+                    </span>
                   </NavLink>
                   <NavLink to="/mis-ordenes" className={navLinkClass} onClick={() => setMenuMovilAbierto(false)}>📦 Mis Pedidos</NavLink>
                   <NavLink to="/account" className={navLinkClass} onClick={() => setMenuMovilAbierto(false)}>👤 Mi cuenta</NavLink>
