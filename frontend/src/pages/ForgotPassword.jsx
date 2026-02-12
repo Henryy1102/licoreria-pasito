@@ -104,13 +104,6 @@ export default function ForgotPassword() {
           </button>
         </form>
 
-        <p className="text-center text-accent mt-4 text-sm">
-          ¿Ya recuerdas tu contraseña?{" "}
-          <Link to="/login" className="text-primary hover:text-subtext font-semibold">
-            Inicia sesión aquí
-          </Link>
-        </p>
-
         <footer className="text-center mt-6 pt-4 border-t border-primary/20">
           <p className="text-xs text-subtext">
             © 2026 Licorería Al Pasito – Todos los derechos reservados
